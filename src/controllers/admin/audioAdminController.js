@@ -88,9 +88,15 @@ export const createAudio = asyncHandler(async (req, res) => {
   // - Otherwise, require audioUrl in the body
   let finalAudioUrl = audioUrl ? audioUrl.trim() : undefined;
 
-  if (audioFile && audioFile.path) {
-    const uploadResult = await uploadMediaToCloudinary(audioFile.path);
-    finalAudioUrl = uploadResult.secure_url;
+  if (audioFile) {
+    // Support both memory storage (buffer) and disk storage (path) for Vercel compatibility
+    const fileSource = audioFile.buffer || audioFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadMediaToCloudinary(fileSource, {
+        filename: audioFile.originalname,
+      });
+      finalAudioUrl = uploadResult.secure_url;
+    }
   }
 
   if (!finalAudioUrl) {
@@ -102,9 +108,15 @@ export const createAudio = asyncHandler(async (req, res) => {
   // - Otherwise, fall back to thumbnailUrl from the body (optional).
   let finalThumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : undefined;
 
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    finalThumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    // Support both memory storage (buffer) and disk storage (path) for Vercel compatibility
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      finalThumbnailUrl = uploadResult.secure_url;
+    }
   }
 
   const audio = await Audio.create({
@@ -192,9 +204,14 @@ export const updateAudio = asyncHandler(async (req, res) => {
   }
 
   // Audio can be updated via new file or direct URL
-  if (audioFile && audioFile.path) {
-    const uploadResult = await uploadMediaToCloudinary(audioFile.path);
-    updates.audioUrl = uploadResult.secure_url;
+  if (audioFile) {
+    const fileSource = audioFile.buffer || audioFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadMediaToCloudinary(fileSource, {
+        filename: audioFile.originalname,
+      });
+      updates.audioUrl = uploadResult.secure_url;
+    }
   } else if (audioUrl !== undefined) {
     if (!audioUrl || !audioUrl.trim()) {
       throw new AppError("audioUrl cannot be empty", 400);
@@ -203,9 +220,14 @@ export const updateAudio = asyncHandler(async (req, res) => {
   }
 
   // Thumbnail can be updated either via new file upload or direct URL
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    updates.thumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      updates.thumbnailUrl = uploadResult.secure_url;
+    }
   } else if (thumbnailUrl !== undefined) {
     updates.thumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : null;
   }

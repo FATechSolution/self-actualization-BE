@@ -18,17 +18,43 @@ cloudinary.config({
 
 /**
  * Upload a file to Cloudinary.
- * Expects a local file path (e.g. from multer), returns Cloudinary upload result.
+ * Accepts either a local file path (for local dev) or a buffer (for serverless/Vercel).
  *
- * @param {string} filePath - Local path to the file
+ * @param {string|Buffer} filePathOrBuffer - Local path to the file or a Buffer
  * @param {Object} options - Additional Cloudinary options
  * @param {string} [options.resourceType='image'] - Cloudinary resource_type ('image', 'video', 'raw', 'auto')
  * @param {string} [options.folder] - Optional folder override
+ * @param {string} [options.filename] - Optional filename for buffer uploads
  */
-export const uploadToCloudinary = async (filePath, options = {}) => {
-  const { resourceType = "image", folder } = options;
+export const uploadToCloudinary = async (filePathOrBuffer, options = {}) => {
+  const { resourceType = "image", folder, filename } = options;
 
-  return cloudinary.uploader.upload(filePath, {
+  // If it's a Buffer (from memory storage), use upload_stream
+  if (Buffer.isBuffer(filePathOrBuffer)) {
+    return new Promise((resolve, reject) => {
+      const uploadOptions = {
+        folder: folder || CLOUDINARY_UPLOAD_FOLDER,
+        resource_type: resourceType,
+      };
+      
+      if (filename) {
+        uploadOptions.public_id = filename;
+      }
+
+      const uploadStream = cloudinary.uploader.upload_stream(
+        uploadOptions,
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      uploadStream.end(filePathOrBuffer);
+    });
+  }
+
+  // Otherwise, treat it as a file path (for local development)
+  return cloudinary.uploader.upload(filePathOrBuffer, {
     folder: folder || CLOUDINARY_UPLOAD_FOLDER,
     resource_type: resourceType,
   });

@@ -88,9 +88,14 @@ export const createVideo = asyncHandler(async (req, res) => {
   // - Otherwise, require videoUrl in the body
   let finalVideoUrl = videoUrl ? videoUrl.trim() : undefined;
 
-  if (videoFile && videoFile.path) {
-    const uploadResult = await uploadMediaToCloudinary(videoFile.path);
-    finalVideoUrl = uploadResult.secure_url;
+  if (videoFile) {
+    const fileSource = videoFile.buffer || videoFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadMediaToCloudinary(fileSource, {
+        filename: videoFile.originalname,
+      });
+      finalVideoUrl = uploadResult.secure_url;
+    }
   }
 
   if (!finalVideoUrl) {
@@ -100,9 +105,14 @@ export const createVideo = asyncHandler(async (req, res) => {
   // Thumbnail handling:
   let finalThumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : undefined;
 
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    finalThumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      finalThumbnailUrl = uploadResult.secure_url;
+    }
   }
 
   const video = await Video.create({
@@ -190,9 +200,14 @@ export const updateVideo = asyncHandler(async (req, res) => {
   }
 
   // Video can be updated via new file or direct URL
-  if (videoFile && videoFile.path) {
-    const uploadResult = await uploadMediaToCloudinary(videoFile.path);
-    updates.videoUrl = uploadResult.secure_url;
+  if (videoFile) {
+    const fileSource = videoFile.buffer || videoFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadMediaToCloudinary(fileSource, {
+        filename: videoFile.originalname,
+      });
+      updates.videoUrl = uploadResult.secure_url;
+    }
   } else if (videoUrl !== undefined) {
     if (!videoUrl || !videoUrl.trim()) {
       throw new AppError("videoUrl cannot be empty", 400);
@@ -201,9 +216,14 @@ export const updateVideo = asyncHandler(async (req, res) => {
   }
 
   // Thumbnail can be updated either via new file upload or direct URL
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    updates.thumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      updates.thumbnailUrl = uploadResult.secure_url;
+    }
   } else if (thumbnailUrl !== undefined) {
     updates.thumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : null;
   }

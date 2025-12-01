@@ -81,9 +81,14 @@ export const createArticle = asyncHandler(async (req, res) => {
 
   let finalThumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : undefined;
 
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    finalThumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      finalThumbnailUrl = uploadResult.secure_url;
+    }
   }
 
   const article = await Article.create({
@@ -164,9 +169,14 @@ export const updateArticle = asyncHandler(async (req, res) => {
   }
 
   // Thumbnail update: file or direct URL
-  if (thumbnailFile && thumbnailFile.path) {
-    const uploadResult = await uploadImageToCloudinary(thumbnailFile.path);
-    updates.thumbnailUrl = uploadResult.secure_url;
+  if (thumbnailFile) {
+    const fileSource = thumbnailFile.buffer || thumbnailFile.path;
+    if (fileSource) {
+      const uploadResult = await uploadImageToCloudinary(fileSource, {
+        filename: thumbnailFile.originalname,
+      });
+      updates.thumbnailUrl = uploadResult.secure_url;
+    }
   } else if (thumbnailUrl !== undefined) {
     updates.thumbnailUrl = thumbnailUrl ? thumbnailUrl.trim() : null;
   }

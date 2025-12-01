@@ -11,9 +11,13 @@ import { authenticateAdmin } from "../../middlewares/admin/adminAuth.js";
 
 const router = express.Router();
 
-// Simple disk storage for temporary files before Cloudinary upload
+// Use memory storage for Vercel serverless compatibility
+// Files are stored in memory and uploaded directly to Cloudinary
 const upload = multer({
-  dest: "tmp/uploads",
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
 });
 
 // All audio management routes require admin authentication
