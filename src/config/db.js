@@ -16,7 +16,7 @@ export const connectDB = async () => {
         return;
       } else {
         throw new Error("MONGO_URI is required");
-      }
+      }a
     }
 
     await mongoose.connect(process.env.MONGO_URI);
