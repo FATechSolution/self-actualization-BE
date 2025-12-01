@@ -10,6 +10,7 @@ import assessmentRoutes from "./routes/assessmentRoutes.js";
 import goalRoutes from "./routes/goalRoutes.js";
 import reflectionRoutes from "./routes/reflectionRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import achievementRoutes from "./routes/achievementRoutes.js";
 import adminAuthRoutes from "./routes/admin/adminAuthRoutes.js";
 import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
 import adminAudioRoutes from "./routes/admin/adminAudioRoutes.js";
@@ -109,6 +110,11 @@ app.get("/", (req, res) => {
         getAvailableCategories: "GET /api/subscriptions/available-categories",
         updateStatus: "PATCH /api/subscriptions/status",
       },
+      achievements: {
+        getAchievements: "GET /api/achievements",
+        getFocusStreak: "GET /api/achievements/streak",
+        getLeaderboard: "GET /api/achievements/leaderboard",
+      },
       adminAuth: {
         register: "POST /api/admin/auth/register",
         login: "POST /api/admin/auth/login",
@@ -153,6 +159,7 @@ app.use("/api/assessment", assessmentRoutes);
 app.use("/api/goals", goalRoutes);
 app.use("/api/reflections", reflectionRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/achievements", achievementRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
 app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/audios", adminAudioRoutes);
