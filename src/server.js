@@ -8,6 +8,6 @@ if (!process.env.VERCEL && !process.env.VERCEL_ENV) {
   });
 }
 
-// Export as Vercel serverless function
-// Vercel will use this as the handler
+// Export as Vercel serverless function handler
+// Vercel expects the default export to be the Express app
 export default app;

@@ -19,12 +19,13 @@ import { errorHandler } from "./utils/errorHandler.js";
 
 dotenv.config();
 
+const app = express();
+
 // Connect to database (non-blocking for serverless)
+// This won't block the function from starting even if DB connection fails
 connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
-
-const app = express();
 
 // CORS middleware
 app.use((req, res, next) => {
