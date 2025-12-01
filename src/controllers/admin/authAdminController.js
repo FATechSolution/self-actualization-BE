@@ -26,7 +26,7 @@ export const registerAdmin = asyncHandler(async (req, res) => {
     throw new AppError("Please provide a valid email address", 400);
   }
 
-  const passwordValidation = validatePassword(password);
+  const passwordValidation = validatePassword(password, 8); // Admin requires 8 char minimum
   if (!passwordValidation.isValid) {
     throw new AppError(passwordValidation.message, 400);
   }
@@ -82,13 +82,30 @@ export const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   // Find admin with password field
-  const admin = await Admin.findOne({ email: email.toLowerCase() }).select("+password");
+  // Note: Since password has select: false, we need to explicitly include it using +password
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  // Query admin and explicitly include password field
+  // Using select with explicit field inclusion
+  const admin = await Admin.findOne({ email: normalizedEmail })
+    .select("name email password createdAt updatedAt");
 
   if (!admin) {
     throw new AppError("Invalid email or password", 401);
   }
 
-  const isPasswordValid = await admin.comparePassword(password);
+  // Verify password field was loaded
+  if (!admin.password) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  // Compare password using bcrypt
+  // Ensure password is not empty or undefined
+  if (!password || password.trim().length === 0) {
+    throw new AppError("Invalid email or password", 401);
+  }
+
+  const isPasswordValid = await admin.comparePassword(password.trim());
 
   if (!isPasswordValid) {
     throw new AppError("Invalid email or password", 401);

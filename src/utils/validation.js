@@ -13,11 +13,11 @@ export const isValidEmail = (email) => {
  * @param {string} password - Password to validate
  * @returns {Object} Validation result with isValid and message
  */
-export const validatePassword = (password) => {
-  if (!password || password.length < 6) {
+export const validatePassword = (password, minLength = 8) => {
+  if (!password || password.length < minLength) {
     return {
       isValid: false,
-      message: "Password must be at least 6 characters long",
+      message: `Password must be at least ${minLength} characters long`,
     };
   }
   return { isValid: true, message: "Password is valid" };
