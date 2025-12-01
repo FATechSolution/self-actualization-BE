@@ -182,7 +182,6 @@ export const updateAudio = asyncHandler(async (req, res) => {
     thumbnailUrl,
     durationSeconds,
     sortOrder,
-    isActive,
   } = req.body;
 
   const audioFile = req.files?.audio?.[0];
@@ -246,13 +245,6 @@ export const updateAudio = asyncHandler(async (req, res) => {
       throw new AppError("sortOrder must be a number", 400);
     }
     updates.sortOrder = parsedSort;
-  }
-
-  if (isActive !== undefined) {
-    if (typeof isActive !== "boolean") {
-      throw new AppError("isActive must be a boolean value", 400);
-    }
-    updates.isActive = isActive;
   }
 
   if (Object.keys(updates).length === 0) {
