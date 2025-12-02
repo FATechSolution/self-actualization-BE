@@ -16,6 +16,7 @@ import adminDashboardRoutes from "./routes/admin/adminDashboardRoutes.js";
 import adminAudioRoutes from "./routes/admin/adminAudioRoutes.js";
 import adminVideoRoutes from "./routes/admin/adminVideoRoutes.js";
 import adminArticleRoutes from "./routes/admin/adminArticleRoutes.js";
+import adminUserRoutes from "./routes/admin/adminUserRoutes.js";
 import { errorHandler } from "./utils/errorHandler.js";
 
 dotenv.config();
@@ -144,6 +145,11 @@ app.get("/", (req, res) => {
         update: "PATCH /api/admin/articles/:id",
         delete: "DELETE /api/admin/articles/:id",
       },
+      adminUsers: {
+        list: "GET /api/admin/users",
+        retrieve: "GET /api/admin/users/:id",
+        delete: "DELETE /api/admin/users/:id",
+      },
     },
     timestamp: new Date().toISOString(),
   });
@@ -165,6 +171,7 @@ app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin/audios", adminAudioRoutes);
 app.use("/api/admin/videos", adminVideoRoutes);
 app.use("/api/admin/articles", adminArticleRoutes);
+app.use("/api/admin/users", adminUserRoutes);
 
 // Health check endpoint
 app.get("/health", (req, res) => {
