@@ -31,9 +31,10 @@ export const connectDB = async () => {
       maxPoolSize: 10, // Maintain up to 10 socket connections
       minPoolSize: 1, // Maintain at least 1 socket connection
       maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
-      bufferCommands: false, // Disable mongoose buffering
-      bufferMaxEntries: 0, // Disable mongoose buffering
     });
+    
+    // Disable mongoose buffering for serverless (set on mongoose instance, not connection options)
+    mongoose.set('bufferCommands', false);
 
     await cachedConnection;
     console.log("✅ MongoDB Connected Successfully");
