@@ -33,7 +33,7 @@ connectDB().catch((err) => {
 app.use((req, res, next) => {
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(",")
-    : ["http://localhost:3000", "http://localhost:5173"];
+    : ["http://localhost:3000", "http://localhost:5173","http://localhost:3001"];
 
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin) || !origin) {
