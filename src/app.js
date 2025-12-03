@@ -1,6 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
-import { connectDB } from "./config/db.js";
+import { connectDB, ensureConnection } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
 import audioRoutes from "./routes/audioRoutes.js";
@@ -53,6 +53,20 @@ app.use((req, res, next) => {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Database connection middleware - ensures DB is connected before handling requests
+app.use(async (req, res, next) => {
+  try {
+    await ensureConnection();
+    next();
+  } catch (error) {
+    console.error("Database connection error in middleware:", error);
+    res.status(503).json({
+      success: false,
+      error: "Database connection failed. Please try again later.",
+    });
+  }
+});
 
 // Welcome/root endpoint
 app.get("/", (req, res) => {
