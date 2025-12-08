@@ -87,44 +87,80 @@ export function getNextBadgeProgress(totalPoints) {
 
 /**
  * Calculate focus streak based on activity dates
+ * Streak is maintained if user has activity today or yesterday
+ * @param {string[]} activityDates - Array of ISO date strings
+ * @param {Date|null} lastActivityDate - Last recorded activity date (for reference, not used in calculation)
+ * @returns {number} Number of consecutive days with activity
  */
 export function calculateFocusStreak(activityDates, lastActivityDate) {
   if (!activityDates || activityDates.length === 0) {
     return 0;
   }
 
-  // Sort dates in descending order
-  const sortedDates = [...activityDates]
-    .map((d) => new Date(d))
-    .sort((a, b) => b - a)
-    .map((d) => d.toDateString());
+  // Convert to Date objects and get unique dates (by date string)
+  const dateSet = new Set();
+  const dateObjects = activityDates
+    .map((d) => {
+      try {
+        const date = new Date(d);
+        if (!Number.isNaN(date.getTime())) {
+          const dateStr = date.toDateString();
+          if (!dateSet.has(dateStr)) {
+            dateSet.add(dateStr);
+            return { date, dateStr };
+          }
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    })
+    .filter((d) => d !== null)
+    .sort((a, b) => b.date - a.date); // Sort descending (most recent first)
 
-  if (sortedDates.length === 0) {
+  if (dateObjects.length === 0) {
     return 0;
   }
 
-  // Check if last activity was today or yesterday (to maintain streak)
-  const today = new Date().toDateString();
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+  // Get today and yesterday for comparison
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const todayStr = today.toDateString();
+  const yesterdayStr = yesterday.toDateString();
+
+  // Check if most recent activity was today or yesterday
+  const mostRecentDate = dateObjects[0].date;
+  mostRecentDate.setHours(0, 0, 0, 0);
+  const mostRecentStr = mostRecentDate.toDateString();
 
   // If last activity is not today or yesterday, streak is broken
-  if (sortedDates[0] !== today && sortedDates[0] !== yesterday) {
+  if (mostRecentStr !== todayStr && mostRecentStr !== yesterdayStr) {
     return 0;
   }
 
-  // Count consecutive days
+  // Count consecutive days starting from the most recent activity
   let streak = 1;
-  let currentDate = new Date(sortedDates[0]);
-  currentDate.setDate(currentDate.getDate() - 1);
+  let expectedDate = new Date(mostRecentDate);
+  expectedDate.setDate(expectedDate.getDate() - 1);
 
-  for (let i = 1; i < sortedDates.length; i++) {
-    const expectedDate = currentDate.toDateString();
-    if (sortedDates[i] === expectedDate) {
+  // Check for consecutive days going backwards
+  for (let i = 1; i < dateObjects.length; i++) {
+    const activityDate = new Date(dateObjects[i].date);
+    activityDate.setHours(0, 0, 0, 0);
+    const expectedStr = expectedDate.toDateString();
+    const activityStr = activityDate.toDateString();
+
+    if (activityStr === expectedStr) {
       streak++;
-      currentDate.setDate(currentDate.getDate() - 1);
-    } else {
+      expectedDate.setDate(expectedDate.getDate() - 1);
+    } else if (activityStr < expectedStr) {
+      // Gap found, streak is broken
       break;
     }
+    // If activityStr > expectedStr, continue (might be duplicate handling)
   }
 
   return streak;

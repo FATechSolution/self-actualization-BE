@@ -4,6 +4,7 @@ import { AppError } from "../utils/errorHandler.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { isValidEmail, validatePassword, validateName } from "../utils/validation.js";
 import { sendPasswordResetOTPEmail } from "../utils/email.js";
+import { uploadImageToCloudinary } from "../utils/cloudinary.js";
 import crypto from "crypto";
 
 /**
@@ -240,6 +241,51 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
     success: true,
     data: {
       user: req.user,
+    },
+  });
+});
+
+/**
+ * @route   POST /api/auth/profile/avatar
+ * @desc    Upload profile avatar image
+ * @access  Private
+ */
+export const uploadProfileAvatar = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const avatarFile = req.file;
+
+  if (!avatarFile) {
+    throw new AppError("Avatar image file is required", 400);
+  }
+
+  // Validate file type (should be an image)
+  const allowedMimeTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+  if (!allowedMimeTypes.includes(avatarFile.mimetype)) {
+    throw new AppError("Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed", 400);
+  }
+
+  // Upload to Cloudinary
+  const fileSource = avatarFile.buffer || avatarFile.path;
+  
+  if (!fileSource) {
+    throw new AppError("File upload failed", 500);
+  }
+
+  const uploadResult = await uploadImageToCloudinary(fileSource, {
+    folder: "self-actualization/profiles",
+    filename: `avatar_${user._id}_${Date.now()}`,
+  });
+
+  // Update user's avatar
+  user.avatar = uploadResult.secure_url;
+  await user.save({ validateBeforeSave: false });
+
+  res.json({
+    success: true,
+    message: "Avatar uploaded successfully",
+    data: {
+      user,
+      avatarUrl: uploadResult.secure_url,
     },
   });
 });

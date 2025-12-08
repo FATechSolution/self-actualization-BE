@@ -16,8 +16,10 @@ import {
 /**
  * Calculate or recalculate user achievements
  * This aggregates all user activities and calculates points, streaks, and badges
+ * @param {mongoose.Types.ObjectId} userId - User ID
+ * @returns {Promise<Object>} Achievement document
  */
-async function calculateUserAchievements(userId) {
+export async function calculateUserAchievements(userId) {
   // Get or create achievement record
   let achievement = await Achievement.findOne({ userId });
   if (!achievement) {

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Goal from "../models/Goal.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
+import { calculateUserAchievements } from "./achievementController.js";
 
 const GOAL_TYPES = ["Career", "Health", "Personal", "Spiritual"];
 
@@ -46,7 +47,11 @@ export const createGoal = asyncHandler(async (req, res) => {
     type,
   });
 
-  res.status(201).json({ success: true, data: goal });
+  res.status(201).json({
+    success: true,
+    message: "Goal created successfully",
+    data: goal.toObject ? goal.toObject() : goal,
+  });
 });
 
 export const getGoals = asyncHandler(async (req, res) => {
@@ -167,10 +172,34 @@ export const updateGoal = asyncHandler(async (req, res) => {
     throw new AppError("End date must be on or after the start date", 400);
   }
 
+  // Check if goal is being marked as completed (for achievement recalculation)
+  const wasCompleted = existingGoal.isCompleted;
+  const willBeCompleted = updates.isCompleted !== undefined ? updates.isCompleted : wasCompleted;
+  const isBeingCompleted = !wasCompleted && willBeCompleted;
+
   Object.assign(existingGoal, updates);
   await existingGoal.save();
 
-  res.json({ success: true, data: existingGoal });
+  // Trigger achievement recalculation if goal was just completed
+  if (isBeingCompleted) {
+    try {
+      // Recalculate achievements in the background (don't wait for it to complete)
+      // This ensures the API response is fast while achievements update asynchronously
+      calculateUserAchievements(userId).catch((error) => {
+        // Log error but don't fail the request
+        console.error("Error recalculating achievements after goal completion:", error);
+      });
+    } catch (error) {
+      // Log error but don't fail the request
+      console.error("Error triggering achievement recalculation:", error);
+    }
+  }
+
+  res.json({
+    success: true,
+    message: "Goal updated successfully",
+    data: existingGoal.toObject ? existingGoal.toObject() : existingGoal,
+  });
 });
 
 export const deleteGoal = asyncHandler(async (req, res) => {

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Reflection from "../models/Reflection.js";
+import Question from "../models/Questions.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 
@@ -12,7 +13,7 @@ export const createReflection = asyncHandler(async (req, res) => {
     throw new AppError("User not authenticated", 401);
   }
 
-  const { mood, note, date } = req.body;
+  const { mood, note, date, questionId } = req.body;
 
   if (!mood) {
     throw new AppError("Mood is required", 400);
@@ -30,6 +31,21 @@ export const createReflection = asyncHandler(async (req, res) => {
     throw new AppError("Note cannot exceed 300 characters", 400);
   }
 
+  // Validate questionId if provided
+  let validQuestionId = null;
+  if (questionId !== undefined && questionId !== null) {
+    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+      throw new AppError("Invalid questionId format", 400);
+    }
+
+    const question = await Question.findById(questionId);
+    if (!question) {
+      throw new AppError("Question not found", 404);
+    }
+
+    validQuestionId = questionId;
+  }
+
   let reflectionDate = Date.now();
   if (date !== undefined) {
     const parsedDate = new Date(date);
@@ -41,6 +57,7 @@ export const createReflection = asyncHandler(async (req, res) => {
 
   const reflection = await Reflection.create({
     userId,
+    questionId: validQuestionId,
     mood,
     note: note ? note.trim() : undefined,
     date: reflectionDate,
@@ -126,7 +143,7 @@ export const updateReflection = asyncHandler(async (req, res) => {
   }
 
   const updates = {};
-  const { mood, note, date } = req.body;
+  const { mood, note, date, questionId } = req.body;
 
   if (mood !== undefined) {
     if (!VALID_MOODS.includes(mood)) {
@@ -151,6 +168,25 @@ export const updateReflection = asyncHandler(async (req, res) => {
       throw new AppError("Date must be a valid ISO string or timestamp", 400);
     }
     updates.date = parsedDate;
+  }
+
+  // Handle questionId update
+  if (questionId !== undefined) {
+    if (questionId === null) {
+      // Allow setting to null to unlink from question
+      updates.questionId = null;
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(questionId)) {
+        throw new AppError("Invalid questionId format", 400);
+      }
+
+      const question = await Question.findById(questionId);
+      if (!question) {
+        throw new AppError("Question not found", 404);
+      }
+
+      updates.questionId = questionId;
+    }
   }
 
   if (Object.keys(updates).length === 0) {

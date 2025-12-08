@@ -3,6 +3,11 @@ import mongoose from "mongoose";
 const reflectionSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    questionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Question",
+      default: null,
+    },
     mood: {
       type: String,
       enum: ["angry", "anxious", "sad", "stressed", "neutral", "happy"],

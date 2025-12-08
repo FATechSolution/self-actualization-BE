@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { connectDB, ensureConnection } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import questionRoutes from "./routes/questionRoutes.js";
+import questionLearningRoutes from "./routes/questionLearningRoutes.js";
 import audioRoutes from "./routes/audioRoutes.js";
 import videoRoutes from "./routes/videoRoutes.js";
 import articleRoutes from "./routes/articleRoutes.js";
@@ -89,6 +90,14 @@ app.get("/", (req, res) => {
       questions: {
         list: "GET /api/questions",
       },
+      questionLearning: {
+        list: "GET /api/question-learning",
+        getByQuestion: "GET /api/question-learning/question/:questionId",
+        getById: "GET /api/question-learning/:id",
+        create: "POST /api/question-learning",
+        update: "PATCH /api/question-learning/:id",
+        delete: "DELETE /api/question-learning/:id",
+      },
       audios: {
         list: "GET /api/audios",
         retrieve: "GET /api/audios/:id",
@@ -172,6 +181,7 @@ app.get("/", (req, res) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/questions", questionRoutes);
+app.use("/api/question-learning", questionLearningRoutes);
 app.use("/api/audios", audioRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/articles", articleRoutes);
