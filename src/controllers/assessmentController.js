@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Question from "../models/Questions.js";
 import UserAssessment from "../models/UserAssessment.js";
 import User from "../models/User.js";
+import QuestionLearning from "../models/QuestionLearning.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 import { getCategoriesForSubscription, validateCategoriesForSubscription } from "../utils/subscription.js";
@@ -46,7 +47,7 @@ export const submitAssessment = asyncHandler(async (req, res) => {
     }
 
     const questions = await Question.find({ _id: { $in: questionIds } })
-      .select(["_id", "category"])
+      .select(["_id", "category", "needKey", "needLabel", "sectionType", "parentQuestionId"])
       .lean();
 
     if (!questions.length) {
@@ -64,6 +65,8 @@ export const submitAssessment = asyncHandler(async (req, res) => {
 
     const categoryTotals = {};
     const categoryCounts = {};
+    const needTotals = {};
+    const needCounts = {};
     const validResponses = [];
 
     for (const response of responses) {
@@ -89,10 +92,19 @@ export const submitAssessment = asyncHandler(async (req, res) => {
         questionId: question._id,
         selectedOption: score,
         category: question.category,
+        needKey: question.needKey || null,
+        needLabel: question.needLabel || null,
+        sectionType: question.sectionType || "regular",
+        parentQuestionId: question.parentQuestionId || null,
       });
 
       categoryTotals[question.category] = (categoryTotals[question.category] || 0) + score;
       categoryCounts[question.category] = (categoryCounts[question.category] || 0) + 1;
+
+      if (question.needKey) {
+        needTotals[question.needKey] = (needTotals[question.needKey] || 0) + score;
+        needCounts[question.needKey] = (needCounts[question.needKey] || 0) + 1;
+      }
     }
 
     if (!validResponses.length) {
@@ -104,6 +116,16 @@ export const submitAssessment = asyncHandler(async (req, res) => {
       categoryScores[categoryKey] = Number(
         (categoryTotals[categoryKey] / categoryCounts[categoryKey]).toFixed(2)
       );
+    });
+
+    const needScores = {};
+    Object.keys(needTotals).forEach((nk) => {
+      const q = questions.find((qq) => qq.needKey === nk);
+      needScores[nk] = {
+        score: Number((needTotals[nk] / needCounts[nk]).toFixed(2)),
+        needLabel: q?.needLabel || null,
+        category: q?.category || null,
+      };
     });
 
     const overallScore =
@@ -122,6 +144,7 @@ export const submitAssessment = asyncHandler(async (req, res) => {
           userId,
           responses: validResponses,
           categoryScores,
+          needScores,
           overallScore,
           completedAt: new Date(),
         },
@@ -146,6 +169,7 @@ export const submitAssessment = asyncHandler(async (req, res) => {
       success: true,
       message: "Assessment submitted successfully",
       categoryScores,
+      needScores,
       overallScore,
       hasCompletedAssessment: true,
     });
@@ -173,6 +197,7 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
     }
   
     const categoryScores = latestAssessment.categoryScores || {};
+    const needScores = latestAssessment.needScores || {};
   
     const overallScore =
       latestAssessment.overallScore ??
@@ -214,6 +239,7 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
       data: {
         assessmentId: latestAssessment._id,
         categoryScores,
+        needScores,
         overallScore,
         lowestCategories,
         completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
@@ -221,7 +247,110 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
       },
     });
   });
-  
+
+// Need-level report with lowest needs and linked learning content
+export const getNeedReport = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) throw new AppError("User not authenticated", 401);
+
+  const latestAssessment = await UserAssessment.findOne({ userId }).sort({ createdAt: -1 }).lean();
+  if (!latestAssessment) throw new AppError("No assessment found for this user", 404);
+
+  const needScores = latestAssessment.needScores || {};
+  const categoryScores = latestAssessment.categoryScores || {};
+
+  const sortedNeeds = Object.entries(needScores)
+    .map(([needKey, val]) => ({ needKey, ...val }))
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+
+  const lowestNeeds = sortedNeeds.slice(0, 3);
+
+  const learningByNeed = {};
+  for (const n of lowestNeeds) {
+    const learning = await QuestionLearning.findOne({ isActive: true })
+      .populate({
+        path: "questionId",
+        match: { needKey: n.needKey },
+        select: ["needKey", "needLabel", "category", "questionText"],
+      })
+      .lean();
+    if (learning?.questionId) {
+      learningByNeed[n.needKey] = {
+        title: learning.title,
+        learningType: learning.learningType,
+        thumbnailUrl: learning.thumbnailUrl,
+        questionId: learning.questionId._id,
+        needLabel: learning.questionId.needLabel,
+        category: learning.questionId.category,
+      };
+    } else {
+      learningByNeed[n.needKey] = null;
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Need-level report",
+    data: {
+      assessmentId: latestAssessment._id,
+      needScores,
+      categoryScores,
+      lowestNeeds,
+      learningByNeed,
+      completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
+    },
+  });
+});
+
+// Recommendations for next actions (learn, goal, coach) based on lowest need
+export const getRecommendations = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  if (!userId) throw new AppError("User not authenticated", 401);
+
+  const latestAssessment = await UserAssessment.findOne({ userId }).sort({ createdAt: -1 }).lean();
+  if (!latestAssessment) throw new AppError("No assessment found for this user", 404);
+
+  const needScores = latestAssessment.needScores || {};
+  const sortedNeeds = Object.entries(needScores)
+    .map(([needKey, val]) => ({ needKey, ...val }))
+    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+
+  const topNeed = sortedNeeds[0];
+
+  const recommendations = [];
+
+  if (topNeed) {
+    const label = topNeed.needLabel || topNeed.needKey;
+    recommendations.push({
+      type: "learn",
+      needKey: topNeed.needKey,
+      needLabel: label,
+      message: `Explore Learn & Grow content for ${label}`,
+    });
+    recommendations.push({
+      type: "goal",
+      needKey: topNeed.needKey,
+      needLabel: label,
+      message: `Set a goal to improve ${label}`,
+    });
+    recommendations.push({
+      type: "coach",
+      needKey: topNeed.needKey,
+      needLabel: label,
+      message: `Ask your coach about ${label}`,
+    });
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Recommendations generated",
+    data: {
+      recommendations,
+      primaryNeed: topNeed || null,
+      assessmentId: latestAssessment._id,
+    },
+  });
+});
 
   export const downloadAssessmentPDF = asyncHandler(async (req, res) => {
     const userId = req.user?._id;

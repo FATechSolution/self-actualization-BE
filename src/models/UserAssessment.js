@@ -24,6 +24,24 @@ const userAssessmentSchema = new mongoose.Schema(
           enum: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
           required: true,
         },
+        needKey: {
+          type: String,
+          default: null,
+        },
+        needLabel: {
+          type: String,
+          default: null,
+        },
+        sectionType: {
+          type: String,
+          enum: ["regular", "V", "Q"],
+          default: "regular",
+        },
+        parentQuestionId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Question",
+          default: null,
+        },
       },
     ],
     categoryScores: {
@@ -32,6 +50,18 @@ const userAssessmentSchema = new mongoose.Schema(
       Social: { type: Number, default: 0 },
       Self: { type: Number, default: 0 },
       "Meta-Needs": { type: Number, default: 0 },
+    },
+    needScores: {
+      type: Map,
+      of: new mongoose.Schema(
+        {
+          score: { type: Number, default: 0 },
+          needLabel: { type: String, default: null },
+          category: { type: String, default: null },
+        },
+        { _id: false }
+      ),
+      default: {},
     },
     overallScore: {
       type: Number,

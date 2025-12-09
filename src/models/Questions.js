@@ -55,6 +55,24 @@ const questionSchema = new mongoose.Schema(
       default: 0,
       // Order within the section for proper sequencing
     },
+    // Need-level metadata (e.g., sleep, nutrition, purpose)
+    needKey: {
+      type: String,
+      trim: true,
+      default: null,
+      // machine-friendly slug, e.g., "sleep", "nutrition"
+    },
+    needLabel: {
+      type: String,
+      trim: true,
+      default: null,
+      // human-friendly label, e.g., "Sleep", "Nutrition"
+    },
+    needOrder: {
+      type: Number,
+      default: 0,
+      // optional ordering within a category
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -62,6 +80,10 @@ const questionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+questionSchema.index({ needKey: 1, section: 1, sectionType: 1 });
+questionSchema.index({ category: 1, needKey: 1 });
+questionSchema.index({ section: 1, sectionOrder: 1 });
 
 const Question = mongoose.model("Question", questionSchema);
 export default Question;

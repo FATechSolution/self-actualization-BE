@@ -11,7 +11,7 @@ import {
 } from "../utils/subscription.js";
 
 export const getQuestions = asyncHandler(async (req, res) => {
-  const { categories, limit = 100, page = 1, section, sectionType, parentQuestionId } = req.query;
+  const { categories, limit = 100, page = 1, section, sectionType, parentQuestionId, needKey } = req.query;
 
   const limitNum = Math.min(Math.max(parseInt(limit, 10) || 100, 1), 200);
   const pageNum = Math.max(parseInt(page, 10) || 1, 1);
@@ -104,8 +104,16 @@ export const getQuestions = asyncHandler(async (req, res) => {
     }
   }
 
-  // Build sort order: section -> sectionOrder -> category -> createdAt
-  const sortOrder = { section: 1, sectionOrder: 1, category: 1, createdAt: 1 };
+  // Filter by needKey if provided
+  if (needKey !== undefined) {
+    if (typeof needKey !== "string" || !needKey.trim()) {
+      throw new AppError("needKey must be a non-empty string", 400);
+    }
+    filters.needKey = needKey.trim();
+  }
+
+  // Build sort order: section -> sectionOrder -> category -> needOrder -> createdAt
+  const sortOrder = { section: 1, sectionOrder: 1, category: 1, needOrder: 1, createdAt: 1 };
 
   const questions = await Question.find(filters)
     .sort(sortOrder)
@@ -127,6 +135,7 @@ export const getQuestions = asyncHandler(async (req, res) => {
       section: filters.section,
       sectionType: filters.sectionType,
       parentQuestionId: filters.parentQuestionId,
+      needKey: filters.needKey,
     },
     data: questions,
   });

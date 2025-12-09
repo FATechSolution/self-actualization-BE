@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Goal from "../models/Goal.js";
+import User from "../models/User.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateUserAchievements } from "./achievementController.js";
@@ -189,6 +190,15 @@ export const updateGoal = asyncHandler(async (req, res) => {
         // Log error but don't fail the request
         console.error("Error recalculating achievements after goal completion:", error);
       });
+
+      // If user hit 3 completed goals, mark coaching offer eligible
+      const completedCount = await Goal.countDocuments({ userId, isCompleted: true });
+      if (completedCount >= 3) {
+        await User.findByIdAndUpdate(userId, {
+          coachingOfferEligible: true,
+          coachingOfferTriggeredAt: new Date(),
+        });
+      }
     } catch (error) {
       // Log error but don't fail the request
       console.error("Error triggering achievement recalculation:", error);

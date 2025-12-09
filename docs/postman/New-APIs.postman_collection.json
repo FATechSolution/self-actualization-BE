@@ -1,0 +1,732 @@
+{
+  "info": {
+    "_postman_id": "new-apis-2025-01-15",
+    "name": "Self Actualization - New APIs",
+    "description": "Postman collection for newly added APIs and updated endpoints. Includes profile image upload, question learning content, updated reflections, V/Q question flow, and improved goal/achievement endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Register a new user account. Returns user data and JWT token."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"Password123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Login with email and password. Returns user data and JWT token. Copy the token to the authToken variable for authenticated requests."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Profile Image Upload",
+      "item": [
+        {
+          "name": "Upload Profile Avatar",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "avatar",
+                  "type": "file",
+                  "src": [],
+                  "description": "Image file (JPEG, PNG, GIF, WebP). Max size: 5MB"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile/avatar",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile",
+                "avatar"
+              ]
+            },
+            "description": "Upload a profile avatar image. The image is uploaded to Cloudinary and the user's avatar URL is updated automatically."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reflections (Updated)",
+      "item": [
+        {
+          "name": "Create Reflection with Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mood\": \"happy\",\n  \"note\": \"Feeling great about this question\",\n  \"questionId\": \"{{questionId}}\",\n  \"date\": \"2025-01-15T10:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reflections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reflections"
+              ]
+            },
+            "description": "Create a reflection linked to a specific question. The questionId field is optional - existing reflections without questionId will continue to work."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Reflection Question Link",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"mood\": \"happy\",\n  \"note\": \"Updated reflection\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reflections/{{reflectionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reflections",
+                "{{reflectionId}}"
+              ]
+            },
+            "description": "Update a reflection, including linking/unlinking it from a question. Set questionId to null to unlink."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Questions (V/Q Flow)",
+      "item": [
+        {
+          "name": "Get First Section Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions?section=1&sectionType=regular",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "section",
+                  "value": "1",
+                  "description": "Section number: 1 = First section (regular questions)"
+                },
+                {
+                  "key": "sectionType",
+                  "value": "regular",
+                  "description": "Section type: regular, V, or Q"
+                },
+                {
+                  "key": "categories",
+                  "value": "Survival,Safety",
+                  "description": "Optional: comma-separated categories",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get questions from the first section (regular questions)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get V Section Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions?section=2&sectionType=V&parentQuestionId={{questionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "section",
+                  "value": "2",
+                  "description": "Section 2 = V section (Vitality questions)"
+                },
+                {
+                  "key": "sectionType",
+                  "value": "V",
+                  "description": "V section type"
+                },
+                {
+                  "key": "parentQuestionId",
+                  "value": "{{questionId}}",
+                  "description": "Parent question ID from section 1"
+                }
+              ]
+            },
+            "description": "Get V section questions for a specific parent question from section 1."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Q Section Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions?section=3&sectionType=Q",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "questions"
+              ],
+              "query": [
+                {
+                  "key": "section",
+                  "value": "3",
+                  "description": "Section 3 = Q section (Quality questions)"
+                },
+                {
+                  "key": "sectionType",
+                  "value": "Q",
+                  "description": "Q section type"
+                }
+              ]
+            },
+            "description": "Get Q section questions (Quality questions about first set)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Goals (Updated)",
+      "item": [
+        {
+          "name": "Create Goal (Improved Response)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Meditate Daily\",\n  \"description\": \"Establish a 10-minute mindfulness routine\",\n  \"startDate\": \"2025-01-01\",\n  \"endDate\": \"2025-01-31\",\n  \"type\": \"Personal\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals"
+              ]
+            },
+            "description": "Create a goal. Response now includes a success message. Achievement recalculation happens automatically when goal is marked as completed."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Goal (Mark as Completed)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isCompleted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/goals/{{goalId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "goals",
+                "{{goalId}}"
+              ]
+            },
+            "description": "Mark a goal as completed. This automatically triggers achievement recalculation in the background (points, badges, streaks are updated)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Question Learning Content",
+      "item": [
+        {
+          "name": "List Learning Content",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning?questionId={{questionId}}&learningType=health&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning"
+              ],
+              "query": [
+                {
+                  "key": "questionId",
+                  "value": "{{questionId}}",
+                  "description": "Optional: Filter by question ID",
+                  "disabled": true
+                },
+                {
+                  "key": "learningType",
+                  "value": "health",
+                  "description": "Optional: Filter by type (health, vitality, general)",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page (default: 50, max: 100)"
+                }
+              ]
+            },
+            "description": "List all learning content with optional filters. Can filter by questionId and learningType."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Learning by Question ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning/question/{{questionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning",
+                "question",
+                "{{questionId}}"
+              ]
+            },
+            "description": "Get learning content for a specific question. This is the recommended endpoint to use after completing the first section of questions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Learning by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning/{{learningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning",
+                "{{learningId}}"
+              ]
+            },
+            "description": "Get learning content by its ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Learning Content",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{questionId}}\",\n  \"title\": \"Understanding Health & Vitality\",\n  \"content\": \"This learning content explains the health and vitality aspects related to this question. It provides insights and educational information to help users understand the deeper meaning behind their responses.\\n\\nThe content can include:\\n- Health implications\\n- Vitality factors\\n- Practical tips\\n- Related resources\",\n  \"learningType\": \"health\",\n  \"thumbnailUrl\": \"https://example.com/thumbnail.jpg\",\n  \"readTimeMinutes\": 5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning"
+              ]
+            },
+            "description": "Create learning content for a question.\n\n**Important Explanation:**\n- MongoDB DOES automatically assign the `_id` for the QuestionLearning document itself (you don't need to provide it)\n- BUT `questionId` is REQUIRED in the request body - it's a reference to an EXISTING Question document\n- Think of it like: \"Create learning content FOR question X\" - you need to tell the system which question it belongs to\n- The `questionId` is a foreign key that links the learning content to a specific question\n- Only one learning content per question is allowed (unique constraint)\n- Learning types: 'health', 'vitality', or 'general'\n\n**Example Flow:**\n1. First, call GET /api/questions to get a list of questions\n2. Copy the `_id` field from any question (e.g., \"507f1f77bcf86cd799439011\")\n3. Use that `_id` as the `questionId` in this request body\n4. MongoDB will automatically create the learning content with its own `_id`\n\n**Response will include:**\n- `_id`: Auto-generated by MongoDB for the learning content\n- `questionId`: The question reference you provided\n- All other fields you sent"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Learning Content",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Title\",\n  \"content\": \"Updated learning content...\",\n  \"learningType\": \"vitality\",\n  \"readTimeMinutes\": 8\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning/{{learningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning",
+                "{{learningId}}"
+              ]
+            },
+            "description": "Update learning content. All fields are optional - only include fields you want to update."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Learning Content",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/question-learning/{{learningId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "question-learning",
+                "{{learningId}}"
+              ]
+            },
+            "description": "Delete learning content (soft delete - sets isActive to false)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Achievements (Improved Streak)",
+      "item": [
+        {
+          "name": "Get Achievements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/achievements",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "achievements"
+              ]
+            },
+            "description": "Get user achievements including improved focus streak calculation. Streak is now more accurately calculated with better date handling."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Focus Streak Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/achievements/streak",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "achievements",
+                "streak"
+              ]
+            },
+            "description": "Get detailed focus streak information including streak achievements unlocked."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://self-actualization-analysis-be.vercel.app",
+      "type": "string",
+      "description": "Base URL for the API. Change to http://localhost:5000 for local development."
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT authentication token. Get this from the login endpoint."
+    },
+    {
+      "key": "questionId",
+      "value": "",
+      "type": "string",
+      "description": "Question ID for testing question-related endpoints."
+    },
+    {
+      "key": "reflectionId",
+      "value": "",
+      "type": "string",
+      "description": "Reflection ID for testing reflection endpoints."
+    },
+    {
+      "key": "goalId",
+      "value": "",
+      "type": "string",
+      "description": "Goal ID for testing goal endpoints."
+    },
+    {
+      "key": "learningId",
+      "value": "",
+      "type": "string",
+      "description": "Learning content ID for testing question learning endpoints."
+    }
+  ]
+}
+

@@ -6,18 +6,22 @@
 export const SUBSCRIPTION_CATEGORIES = {
   Free: ["Survival", "Safety"],
   Premium: ["Social", "Self"],
+  Plus: ["Social", "Self"], // alias for Premium
   Coach: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
+  Pro: ["Survival", "Safety", "Social", "Self", "Meta-Needs"], // alias for Coach
 };
 
 // Subscription pricing (in USD)
 export const SUBSCRIPTION_PRICING = {
   Free: 0,
   Premium: 19,
+  Plus: 19,
   Coach: 39,
+  Pro: 39,
 };
 
 // Valid subscription types
-export const SUBSCRIPTION_TYPES = ["Free", "Premium", "Coach"];
+export const SUBSCRIPTION_TYPES = ["Free", "Premium", "Plus", "Coach", "Pro"];
 
 // Valid categories
 export const VALID_CATEGORIES = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
