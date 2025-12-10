@@ -23,7 +23,7 @@ export const createGoal = asyncHandler(async (req, res) => {
     throw new AppError("User not authenticated", 401);
   }
 
-  const { title, description, startDate, endDate, type, needKey, needLabel, needOrder } = req.body;
+  const { title, description, startDate, endDate, type, needKey, needLabel, needOrder, questionId } = req.body;
 
   if (!startDate || !endDate || !type) {
     throw new AppError("Missing required fields", 400);
@@ -33,11 +33,32 @@ export const createGoal = asyncHandler(async (req, res) => {
     throw new AppError(`Invalid goal type. Allowed types: ${GOAL_TYPES.join(", ")}`, 400);
   }
 
+  // If questionId is provided directly, validate it
+  let finalQuestionId = questionId || null;
+  if (questionId) {
+    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+      throw new AppError("Invalid questionId format", 400);
+    }
+    const question = await Question.findOne({
+      _id: questionId,
+      category: type,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (!question) {
+      throw new AppError(
+        `Question with ID "${questionId}" not found in category "${type}" or is inactive`,
+        400
+      );
+    }
+  }
+
   // If needKey is provided, validate it exists and belongs to the selected category
   let finalNeedKey = needKey || null;
   let finalNeedLabel = needLabel || null;
   let finalNeedOrder = needOrder || null;
-  let finalQuestionId = null;
   let finalTitle = title ? title.trim() : null;
 
   if (needKey) {
@@ -61,7 +82,19 @@ export const createGoal = asyncHandler(async (req, res) => {
     finalNeedKey = needQuestion.needKey;
     finalNeedLabel = needQuestion.needLabel || needLabel;
     finalNeedOrder = needQuestion.needOrder || needOrder;
-    finalQuestionId = needQuestion._id; // Store the question ID
+    
+    // If questionId not provided directly, use the one from needKey lookup
+    if (!finalQuestionId) {
+      finalQuestionId = needQuestion._id;
+    } else {
+      // If both provided, validate they match
+      if (finalQuestionId.toString() !== needQuestion._id.toString()) {
+        throw new AppError(
+          `questionId "${questionId}" does not match needKey "${needKey}"`,
+          400
+        );
+      }
+    }
 
     // Auto-fill title with needLabel if title not provided
     if (!finalTitle && finalNeedLabel) {

@@ -691,12 +691,14 @@ Authorization: Bearer {token}
   "needKey": "sleep",  // NEW: Optional, links goal to specific need
   "needLabel": "Sleep",  // NEW: Optional, auto-filled from needKey
   "needOrder": 1,  // NEW: Optional, auto-filled from needKey
-  "questionId": "507f1f77bcf86cd799439011"  // NEW: Optional, auto-filled from needKey
+  "questionId": "507f1f77bcf86cd799439011"  // NEW: Optional, can be provided directly or auto-filled from needKey
 }
 
 Note:
 - If needKey is provided, title is auto-filled as "Improve {needLabel}"
 - If needKey is provided, needLabel, needOrder, and questionId are auto-filled from question data
+- questionId can be provided directly - it will be validated against the category and needKey
+- If both questionId and needKey are provided, they must match
 - type must be one of: "Survival", "Safety", "Social", "Self", "Meta-Needs"
 
 Response:

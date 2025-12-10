@@ -1,0 +1,575 @@
+{
+	"info": {
+		"_postman_id": "goal-apis-collection",
+		"name": "Goal APIs - Self-Actualization",
+		"description": "Complete collection of Goal Management APIs including needs by category",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Needs by Category",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/goals/needs/Survival",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"needs",
+						"Survival"
+					]
+				},
+				"description": "Get list of needs for a specific category. Use this to populate the dropdown when user selects a category for goal creation.\n\n**Available Categories:**\n- Survival\n- Safety\n- Social\n- Self\n- Meta-Needs"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/goals/needs/Survival",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals",
+								"needs",
+								"Survival"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"category\": \"Survival\",\n    \"total\": 7,\n    \"data\": [\n        {\n            \"needKey\": \"money\",\n            \"needLabel\": \"Money\",\n            \"needOrder\": 1,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439011\"\n        },\n        {\n            \"needKey\": \"sex\",\n            \"needLabel\": \"Sex\",\n            \"needOrder\": 2,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439012\"\n        },\n        {\n            \"needKey\": \"exercise\",\n            \"needLabel\": \"Exercise\",\n            \"needOrder\": 3,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439013\"\n        },\n        {\n            \"needKey\": \"vitality\",\n            \"needLabel\": \"Vitality\",\n            \"needOrder\": 4,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439014\"\n        },\n        {\n            \"needKey\": \"weight-management\",\n            \"needLabel\": \"Weight Management\",\n            \"needOrder\": 5,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439015\"\n        },\n        {\n            \"needKey\": \"food\",\n            \"needLabel\": \"Food\",\n            \"needOrder\": 6,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439016\"\n        },\n        {\n            \"needKey\": \"sleep\",\n            \"needLabel\": \"Sleep\",\n            \"needOrder\": 7,\n            \"category\": \"Survival\",\n            \"questionId\": \"507f1f77bcf86cd799439017\"\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Create Goal",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Improve Sleep\",\n    \"description\": \"Get 8 hours of quality sleep every night\",\n    \"startDate\": \"2025-01-15T00:00:00Z\",\n    \"endDate\": \"2025-02-15T00:00:00Z\",\n    \"type\": \"Survival\",\n    \"needKey\": \"sleep\",\n    \"questionId\": \"507f1f77bcf86cd799439017\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/goals",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals"
+					]
+				},
+				"description": "Create a new goal. If needKey is provided, title will be auto-filled as 'Improve {needLabel}'. If questionId is provided, it will be validated against the category and needKey.\n\n**Required Fields:**\n- title (or needKey for auto-fill)\n- startDate\n- endDate\n- type (Survival, Safety, Social, Self, Meta-Needs)\n\n**Optional Fields:**\n- description\n- needKey (links goal to specific need)\n- needLabel (auto-filled from needKey)\n- needOrder (auto-filled from needKey)\n- questionId (can be provided directly or auto-filled from needKey)"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Improve Sleep\",\n    \"description\": \"Get 8 hours of quality sleep every night\",\n    \"startDate\": \"2025-01-15T00:00:00Z\",\n    \"endDate\": \"2025-02-15T00:00:00Z\",\n    \"type\": \"Survival\",\n    \"needKey\": \"sleep\",\n    \"questionId\": \"507f1f77bcf86cd799439017\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/goals",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals"
+							]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Goal created successfully\",\n    \"data\": {\n        \"_id\": \"507f1f77bcf86cd799439018\",\n        \"userId\": \"507f1f77bcf86cd799439010\",\n        \"title\": \"Improve Sleep\",\n        \"description\": \"Get 8 hours of quality sleep every night\",\n        \"startDate\": \"2025-01-15T00:00:00.000Z\",\n        \"endDate\": \"2025-02-15T00:00:00.000Z\",\n        \"type\": \"Survival\",\n        \"needKey\": \"sleep\",\n        \"needLabel\": \"Sleep\",\n        \"needOrder\": 7,\n        \"questionId\": \"507f1f77bcf86cd799439017\",\n        \"isCompleted\": false,\n        \"createdAt\": \"2025-01-15T10:00:00.000Z\",\n        \"updatedAt\": \"2025-01-15T10:00:00.000Z\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Create Goal (Auto-fill Title from Need)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"description\": \"Focus on improving my sleep quality\",\n    \"startDate\": \"2025-01-15T00:00:00Z\",\n    \"endDate\": \"2025-02-15T00:00:00Z\",\n    \"type\": \"Survival\",\n    \"needKey\": \"sleep\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/goals",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals"
+					]
+				},
+				"description": "Create goal without providing title - it will be auto-filled as 'Improve Sleep' from the needKey. needLabel, needOrder, and questionId will also be auto-filled."
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Goals",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/goals?status=active",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "active",
+							"description": "Filter by status: 'active' or 'completed' (optional)"
+						}
+					]
+				},
+				"description": "Get all goals for the authenticated user. Optionally filter by status (active or completed)."
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/goals?status=active",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals"
+							],
+							"query": [
+								{
+									"key": "status",
+									"value": "active"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"total\": 3,\n    \"data\": [\n        {\n            \"_id\": \"507f1f77bcf86cd799439018\",\n            \"userId\": \"507f1f77bcf86cd799439010\",\n            \"title\": \"Improve Sleep\",\n            \"description\": \"Get 8 hours of quality sleep every night\",\n            \"startDate\": \"2025-01-15T00:00:00.000Z\",\n            \"endDate\": \"2025-02-15T00:00:00.000Z\",\n            \"type\": \"Survival\",\n            \"needKey\": \"sleep\",\n            \"needLabel\": \"Sleep\",\n            \"needOrder\": 7,\n            \"questionId\": \"507f1f77bcf86cd799439017\",\n            \"isCompleted\": false,\n            \"createdAt\": \"2025-01-15T10:00:00.000Z\",\n            \"updatedAt\": \"2025-01-15T10:00:00.000Z\"\n        },\n        {\n            \"_id\": \"507f1f77bcf86cd799439019\",\n            \"userId\": \"507f1f77bcf86cd799439010\",\n            \"title\": \"Improve Exercise\",\n            \"description\": \"Exercise 30 minutes daily\",\n            \"startDate\": \"2025-01-15T00:00:00.000Z\",\n            \"endDate\": \"2025-02-15T00:00:00.000Z\",\n            \"type\": \"Survival\",\n            \"needKey\": \"exercise\",\n            \"needLabel\": \"Exercise\",\n            \"needOrder\": 3,\n            \"questionId\": \"507f1f77bcf86cd799439013\",\n            \"isCompleted\": false,\n            \"createdAt\": \"2025-01-14T10:00:00.000Z\",\n            \"updatedAt\": \"2025-01-14T10:00:00.000Z\"\n        }\n    ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Goal by ID",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"507f1f77bcf86cd799439018"
+					]
+				},
+				"description": "Get a specific goal by its ID. Returns goal with needKey, needLabel, needOrder, and questionId."
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals",
+								"507f1f77bcf86cd799439018"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"data\": {\n        \"_id\": \"507f1f77bcf86cd799439018\",\n        \"userId\": \"507f1f77bcf86cd799439010\",\n        \"title\": \"Improve Sleep\",\n        \"description\": \"Get 8 hours of quality sleep every night\",\n        \"startDate\": \"2025-01-15T00:00:00.000Z\",\n        \"endDate\": \"2025-02-15T00:00:00.000Z\",\n        \"type\": \"Survival\",\n        \"needKey\": \"sleep\",\n        \"needLabel\": \"Sleep\",\n        \"needOrder\": 7,\n        \"questionId\": \"507f1f77bcf86cd799439017\",\n        \"isCompleted\": false,\n        \"createdAt\": \"2025-01-15T10:00:00.000Z\",\n        \"updatedAt\": \"2025-01-15T10:00:00.000Z\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Update Goal",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Improve Sleep Quality\",\n    \"description\": \"Get 8-9 hours of quality sleep every night\",\n    \"isCompleted\": false\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"507f1f77bcf86cd799439018"
+					]
+				},
+				"description": "Update a goal. All fields are optional. When isCompleted changes to true, achievements are automatically recalculated."
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Improve Sleep Quality\",\n    \"description\": \"Get 8-9 hours of quality sleep every night\",\n    \"isCompleted\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals",
+								"507f1f77bcf86cd799439018"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Goal updated successfully\",\n    \"data\": {\n        \"_id\": \"507f1f77bcf86cd799439018\",\n        \"userId\": \"507f1f77bcf86cd799439010\",\n        \"title\": \"Improve Sleep Quality\",\n        \"description\": \"Get 8-9 hours of quality sleep every night\",\n        \"startDate\": \"2025-01-15T00:00:00.000Z\",\n        \"endDate\": \"2025-02-15T00:00:00.000Z\",\n        \"type\": \"Survival\",\n        \"needKey\": \"sleep\",\n        \"needLabel\": \"Sleep\",\n        \"needOrder\": 7,\n        \"questionId\": \"507f1f77bcf86cd799439017\",\n        \"isCompleted\": false,\n        \"createdAt\": \"2025-01-15T10:00:00.000Z\",\n        \"updatedAt\": \"2025-01-15T11:00:00.000Z\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Mark Goal as Completed",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"isCompleted\": true\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"507f1f77bcf86cd799439018"
+					]
+				},
+				"description": "Mark a goal as completed. This automatically triggers achievement recalculation in the background. If user completes 3rd goal, coaching offer is automatically set to eligible."
+			},
+			"response": []
+		},
+		{
+			"name": "Update Goal Need",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"needKey\": \"exercise\",\n    \"questionId\": \"507f1f77bcf86cd799439013\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"507f1f77bcf86cd799439018"
+					]
+				},
+				"description": "Update the need associated with a goal. If needKey is updated, needLabel, needOrder, and questionId are auto-filled. If questionId is provided, it will be validated against the needKey."
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Goal",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{auth_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"goals",
+						"507f1f77bcf86cd799439018"
+					]
+				},
+				"description": "Delete a goal permanently."
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{auth_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/goals/507f1f77bcf86cd799439018",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"goals",
+								"507f1f77bcf86cd799439018"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Goal deleted successfully\"\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://self-actualization-analysis-be.vercel.app",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
