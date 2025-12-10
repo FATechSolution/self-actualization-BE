@@ -153,23 +153,16 @@ GET /api/questions?sectionType=Q&parentQuestionId={regularQuestionId}
 
 ### 4. Need-Level Report Endpoint
 
-**New Endpoint:** `GET /api/assessment/needs-report`
+**Merged Endpoint:** `GET /api/assessment/needs-report` (includes recommendations)
 
 Returns:
-- Need-level scores with labels
+- Need-level scores with labels and questionIds
 - Lowest needs (for recommendations)
 - Learning content links per need
 - Category context
-
-### 5. Recommendations Endpoint
-
-**New Endpoint:** `GET /api/assessment/recommendations`
-
-Returns:
-- Suggested actions based on lowest needs
-- "Ask your coach?" prompts
-- "Set A Goal" suggestions
-- "Learn & Grow" content links
+- Recommendations (learn, goal, coach actions)
+- Primary need (lowest scoring need)
+- Suggested prompt for user action
 
 ### 6. Coaching Offer Trigger
 
@@ -356,7 +349,7 @@ Response:
 }
 ```
 
-#### Get Need-Level Report (NEW)
+#### Get Need-Level Report (Merged with Recommendations)
 ```
 GET /api/assessment/needs-report
 Authorization: Bearer {token}
@@ -364,71 +357,87 @@ Authorization: Bearer {token}
 Response:
 {
   "success": true,
+  "message": "Need-level report with recommendations",
   "data": {
+    "assessmentId": "...",
     "needScores": [
       {
         "needKey": "sleep",
         "needLabel": "Sleep",
         "score": 5.5,
         "category": "Survival",
-        "learningContentId": "...",
-        "hasLearningContent": true
+        "questionId": "507f1f77bcf86cd799439011"  // NEW: Question ID for this need
+      },
+      {
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "score": 3.2,
+        "category": "Survival",
+        "questionId": "507f1f77bcf86cd799439012"
       },
       ...
     ],
+    "categoryScores": {
+      "Survival": 4.8,
+      "Safety": 5.2
+    },
     "lowestNeeds": [
       {
         "needKey": "exercise",
         "needLabel": "Exercise",
         "score": 3.2,
-        "category": "Survival"
+        "category": "Survival",
+        "questionId": "507f1f77bcf86cd799439012"
       }
     ],
-    "categoryContext": {
-      "Survival": {
-        "averageScore": 4.8,
-        "needs": ["sleep", "exercise", "food", "money"]
+    "learningByNeed": {
+      "exercise": {
+        "title": "Understanding Exercise & Fitness",
+        "learningType": "health",
+        "thumbnailUrl": "...",
+        "questionId": "507f1f77bcf86cd799439012",
+        "needLabel": "Exercise",
+        "category": "Survival"
       }
-    }
-  }
-}
-```
-
-#### Get Recommendations (NEW)
-```
-GET /api/assessment/recommendations
-Authorization: Bearer {token}
-
-Response:
-{
-  "success": true,
-  "data": {
-    "recommendedActions": [
+    },
+    "recommendations": [
       {
         "type": "learn",
         "needKey": "exercise",
         "needLabel": "Exercise",
-        "message": "Learn more about improving your exercise routine",
-        "learningContentId": "..."
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Explore Learn & Grow content for Exercise"
       },
       {
         "type": "goal",
-        "needKey": "sleep",
-        "needLabel": "Sleep",
-        "message": "Set a goal to improve your sleep quality"
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Set a goal to improve Exercise"
       },
       {
         "type": "coach",
-        "needKey": "money",
-        "needLabel": "Money",
-        "message": "Ask your coach about financial planning strategies"
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Ask your coach about Exercise"
       }
     ],
-    "lowestNeeds": [...],
-    "suggestedPrompt": "Which one of your needs would you like to develop more skills in?"
+    "primaryNeed": {
+      "needKey": "exercise",
+      "needLabel": "Exercise",
+      "score": 3.2,
+      "category": "Survival",
+      "questionId": "507f1f77bcf86cd799439012"
+    },
+    "suggestedPrompt": "Which one of your needs would you like to develop more skills in?",
+    "completedAt": "2025-01-15T10:00:00Z"
   }
 }
 ```
+
+**Note:** The `/api/assessment/recommendations` endpoint is now merged into `/api/assessment/needs-report`. 
+The recommendations endpoint still works for backward compatibility but returns the same merged data.
 
 #### Download Assessment PDF
 ```
@@ -554,6 +563,7 @@ Response:
     "needKey": "sleep",
     "needLabel": "Sleep",
     "needOrder": 1,
+    "questionId": "507f1f77bcf86cd799439011",
     "isCompleted": false,
     "createdAt": "...",
     "updatedAt": "..."
@@ -581,6 +591,7 @@ Response:
       "needKey": "sleep",
       "needLabel": "Sleep",
       "needOrder": 1,
+      "questionId": "507f1f77bcf86cd799439011",
       "isCompleted": false,
       ...
     }
@@ -603,6 +614,7 @@ Response:
     "needKey": "sleep",
     "needLabel": "Sleep",
     "needOrder": 1,
+    "questionId": "507f1f77bcf86cd799439011",
     "isCompleted": false,
     ...
   }
@@ -624,9 +636,9 @@ Authorization: Bearer {token}
 }
 
 Note:
-- If needKey is updated, needLabel and needOrder are auto-filled
+- If needKey is updated, needLabel, needOrder, and questionId are auto-filled
 - If needKey is updated and title not provided, title is auto-filled as "Improve {needLabel}"
-- Setting needKey to null clears needLabel and needOrder
+- Setting needKey to null clears needLabel, needOrder, and questionId
 - This automatically triggers achievement recalculation when isCompleted changes to true
 ```
 
@@ -772,7 +784,7 @@ async function submitAssessment(responses) {
 
 ### Step 2: Report Implementation
 
-#### 2.1 Fetch Need-Level Report
+#### 2.1 Fetch Need-Level Report (with Recommendations)
 ```javascript
 async function fetchNeedsReport() {
   const response = await fetch(
@@ -784,6 +796,7 @@ async function fetchNeedsReport() {
     }
   );
   const data = await response.json();
+  // Returns: needScores (with questionId), lowestNeeds, recommendations, learningByNeed, etc.
   return data.data;
 }
 ```
@@ -867,11 +880,11 @@ needsReport.needScores.forEach(need => {
 
 ### Step 4: Recommendations & Goal Setting
 
-#### 4.1 Fetch Recommendations
+#### 4.1 Fetch Needs Report (includes Recommendations)
 ```javascript
-async function fetchRecommendations() {
+async function fetchNeedsReport() {
   const response = await fetch(
-    `${API_BASE_URL}/api/assessment/recommendations`,
+    `${API_BASE_URL}/api/assessment/needs-report`,
     {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -879,17 +892,21 @@ async function fetchRecommendations() {
     }
   );
   const data = await response.json();
+  // data.recommendations - array of recommended actions
+  // data.primaryNeed - lowest scoring need
+  // data.needScores - all needs with questionIds
   return data.data;
 }
 ```
 
 #### 4.2 Display Recommendation Prompt
 ```javascript
-const recommendations = await fetchRecommendations();
+const needsReport = await fetchNeedsReport();
+const recommendations = needsReport.recommendations;
 
 // Show prompt: "Which one of your needs would you like to develop more skills in?"
 // Show options:
-recommendations.recommendedActions.forEach(action => {
+recommendations.forEach(action => {
   if (action.type === 'coach') {
     showButton('Ask your coach?', () => {
       // Navigate to coach contact or show coach options
@@ -897,14 +914,14 @@ recommendations.recommendedActions.forEach(action => {
   }
   if (action.type === 'goal') {
     showButton('Set A Goal', () => {
-      // Navigate to goal creation with pre-filled need
-      navigateToGoalCreation(action.needKey);
+      // Navigate to goal creation with pre-filled need and questionId
+      navigateToGoalCreation(action.needKey, action.questionId);
     });
   }
   if (action.type === 'learn') {
     showButton('Learn & Grow', () => {
-      // Show learning content for this need
-      showLearningContent(action.needKey);
+      // Show learning content for this need using questionId
+      showLearningContent(action.questionId);
     });
   }
 });

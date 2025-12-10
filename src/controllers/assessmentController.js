@@ -248,7 +248,7 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
     });
   });
 
-// Need-level report with lowest needs and linked learning content
+// Need-level report with lowest needs, linked learning content, recommendations, and questionIds
 export const getNeedReport = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   if (!userId) throw new AppError("User not authenticated", 401);
@@ -259,98 +259,124 @@ export const getNeedReport = asyncHandler(async (req, res) => {
   const needScores = latestAssessment.needScores || {};
   const categoryScores = latestAssessment.categoryScores || {};
 
-  const sortedNeeds = Object.entries(needScores)
-    .map(([needKey, val]) => ({ needKey, ...val }))
-    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+  // Convert needScores to array with questionId
+  const needScoresArray = [];
+  for (const [needKey, needData] of Object.entries(needScores)) {
+    // Find the question for this need to get questionId
+    const question = await Question.findOne({
+      needKey: needKey,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    })
+      .select("_id needKey needLabel category")
+      .lean();
+
+    needScoresArray.push({
+      needKey,
+      needLabel: needData.needLabel || needKey,
+      score: needData.score || 0,
+      category: needData.category || null,
+      questionId: question?._id || null,
+    });
+  }
+
+  // Sort by score (lowest first)
+  const sortedNeeds = needScoresArray.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
 
   const lowestNeeds = sortedNeeds.slice(0, 3);
+  const topNeed = sortedNeeds[0] || null;
 
+  // Get learning content for lowest needs
   const learningByNeed = {};
   for (const n of lowestNeeds) {
-    const learning = await QuestionLearning.findOne({ isActive: true })
-      .populate({
-        path: "questionId",
-        match: { needKey: n.needKey },
-        select: ["needKey", "needLabel", "category", "questionText"],
+    if (n.questionId) {
+      const learning = await QuestionLearning.findOne({
+        questionId: n.questionId,
+        isActive: true,
       })
-      .lean();
-    if (learning?.questionId) {
-      learningByNeed[n.needKey] = {
-        title: learning.title,
-        learningType: learning.learningType,
-        thumbnailUrl: learning.thumbnailUrl,
-        questionId: learning.questionId._id,
-        needLabel: learning.questionId.needLabel,
-        category: learning.questionId.category,
-      };
+        .populate({
+          path: "questionId",
+          select: ["needKey", "needLabel", "category", "questionText"],
+        })
+        .lean();
+      
+      if (learning?.questionId) {
+        learningByNeed[n.needKey] = {
+          title: learning.title,
+          learningType: learning.learningType,
+          thumbnailUrl: learning.thumbnailUrl,
+          questionId: learning.questionId._id,
+          needLabel: learning.questionId.needLabel,
+          category: learning.questionId.category,
+        };
+      } else {
+        learningByNeed[n.needKey] = null;
+      }
     } else {
       learningByNeed[n.needKey] = null;
     }
   }
 
-  res.status(200).json({
-    success: true,
-    message: "Need-level report",
-    data: {
-      assessmentId: latestAssessment._id,
-      needScores,
-      categoryScores,
-      lowestNeeds,
-      learningByNeed,
-      completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
-    },
-  });
-});
-
-// Recommendations for next actions (learn, goal, coach) based on lowest need
-export const getRecommendations = asyncHandler(async (req, res) => {
-  const userId = req.user?._id;
-  if (!userId) throw new AppError("User not authenticated", 401);
-
-  const latestAssessment = await UserAssessment.findOne({ userId }).sort({ createdAt: -1 }).lean();
-  if (!latestAssessment) throw new AppError("No assessment found for this user", 404);
-
-  const needScores = latestAssessment.needScores || {};
-  const sortedNeeds = Object.entries(needScores)
-    .map(([needKey, val]) => ({ needKey, ...val }))
-    .sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
-
-  const topNeed = sortedNeeds[0];
-
+  // Generate recommendations based on lowest need
   const recommendations = [];
-
   if (topNeed) {
     const label = topNeed.needLabel || topNeed.needKey;
     recommendations.push({
       type: "learn",
       needKey: topNeed.needKey,
       needLabel: label,
+      questionId: topNeed.questionId,
       message: `Explore Learn & Grow content for ${label}`,
     });
     recommendations.push({
       type: "goal",
       needKey: topNeed.needKey,
       needLabel: label,
+      questionId: topNeed.questionId,
       message: `Set a goal to improve ${label}`,
     });
     recommendations.push({
       type: "coach",
       needKey: topNeed.needKey,
       needLabel: label,
+      questionId: topNeed.questionId,
       message: `Ask your coach about ${label}`,
     });
   }
 
   res.status(200).json({
     success: true,
-    message: "Recommendations generated",
+    message: "Need-level report with recommendations",
     data: {
-      recommendations,
-      primaryNeed: topNeed || null,
       assessmentId: latestAssessment._id,
+      needScores: needScoresArray, // Array with questionId included
+      categoryScores,
+      lowestNeeds: lowestNeeds.map(n => ({
+        needKey: n.needKey,
+        needLabel: n.needLabel,
+        score: n.score,
+        category: n.category,
+        questionId: n.questionId,
+      })),
+      learningByNeed,
+      recommendations, // Merged from recommendations endpoint
+      primaryNeed: topNeed ? {
+        needKey: topNeed.needKey,
+        needLabel: topNeed.needLabel,
+        score: topNeed.score,
+        category: topNeed.category,
+        questionId: topNeed.questionId,
+      } : null,
+      suggestedPrompt: "Which one of your needs would you like to develop more skills in?",
+      completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
     },
   });
 });
+
+// DEPRECATED: Use getNeedReport instead - merged into /api/assessment/needs-report
+// Keeping for backward compatibility - calls the merged endpoint
+export const getRecommendations = getNeedReport;
 
   export const downloadAssessmentPDF = asyncHandler(async (req, res) => {
     const userId = req.user?._id;
