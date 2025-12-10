@@ -530,12 +530,13 @@ Authorization: Bearer {token}
   "type": "Survival",  // Changed: Now uses assessment categories
   "needKey": "sleep",  // NEW: Optional, links goal to specific need
   "needLabel": "Sleep",  // NEW: Optional, auto-filled from needKey
-  "needOrder": 1  // NEW: Optional, auto-filled from needKey
+  "needOrder": 1,  // NEW: Optional, auto-filled from needKey
+  "questionId": "507f1f77bcf86cd799439011"  // NEW: Optional, auto-filled from needKey
 }
 
 Note:
 - If needKey is provided, title is auto-filled as "Improve {needLabel}"
-- If needKey is provided, needLabel and needOrder are auto-filled from question data
+- If needKey is provided, needLabel, needOrder, and questionId are auto-filled from question data
 - type must be one of: "Survival", "Safety", "Social", "Self", "Meta-Needs"
 
 Response:

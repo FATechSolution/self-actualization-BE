@@ -37,6 +37,7 @@ export const createGoal = asyncHandler(async (req, res) => {
   let finalNeedKey = needKey || null;
   let finalNeedLabel = needLabel || null;
   let finalNeedOrder = needOrder || null;
+  let finalQuestionId = null;
   let finalTitle = title ? title.trim() : null;
 
   if (needKey) {
@@ -60,6 +61,7 @@ export const createGoal = asyncHandler(async (req, res) => {
     finalNeedKey = needQuestion.needKey;
     finalNeedLabel = needQuestion.needLabel || needLabel;
     finalNeedOrder = needQuestion.needOrder || needOrder;
+    finalQuestionId = needQuestion._id; // Store the question ID
 
     // Auto-fill title with needLabel if title not provided
     if (!finalTitle && finalNeedLabel) {
@@ -88,12 +90,23 @@ export const createGoal = asyncHandler(async (req, res) => {
     needKey: finalNeedKey,
     needLabel: finalNeedLabel,
     needOrder: finalNeedOrder,
+    questionId: finalQuestionId,
   });
+
+  // Ensure need fields including questionId are included in response
+  const goalData = goal.toObject ? goal.toObject() : goal;
+  const goalWithNeeds = {
+    ...goalData,
+    needKey: goal.needKey || null,
+    needLabel: goal.needLabel || null,
+    needOrder: goal.needOrder || null,
+    questionId: goal.questionId || null,
+  };
 
   res.status(201).json({
     success: true,
     message: "Goal created successfully",
-    data: goal.toObject ? goal.toObject() : goal,
+    data: goalWithNeeds,
   });
 });
 
@@ -125,6 +138,7 @@ export const getGoals = asyncHandler(async (req, res) => {
     needKey: goal.needKey || null,
     needLabel: goal.needLabel || null,
     needOrder: goal.needOrder || null,
+    questionId: goal.questionId || null,
   }));
 
   res.json({ success: true, total: goalsWithNeeds.length, data: goalsWithNeeds });
@@ -155,6 +169,7 @@ export const getGoalById = asyncHandler(async (req, res) => {
     needKey: goal.needKey || null,
     needLabel: goal.needLabel || null,
     needOrder: goal.needOrder || null,
+    questionId: goal.questionId || null,
   };
 
   res.json({ success: true, data: goalWithNeeds });
@@ -203,6 +218,7 @@ export const updateGoal = asyncHandler(async (req, res) => {
       updates.needKey = null;
       updates.needLabel = null;
       updates.needOrder = null;
+      updates.questionId = null;
     } else {
       // Validate need exists and belongs to the selected category
       const needQuestion = await Question.findOne({
@@ -224,6 +240,7 @@ export const updateGoal = asyncHandler(async (req, res) => {
       updates.needKey = needQuestion.needKey;
       updates.needLabel = needQuestion.needLabel || needLabel || null;
       updates.needOrder = needQuestion.needOrder || needOrder || null;
+      updates.questionId = needQuestion._id; // Store the question ID
 
       // Auto-update title if not explicitly provided and needLabel exists
       if (!updates.title && updates.needLabel) {
@@ -315,6 +332,7 @@ export const updateGoal = asyncHandler(async (req, res) => {
     needKey: existingGoal.needKey || null,
     needLabel: existingGoal.needLabel || null,
     needOrder: existingGoal.needOrder || null,
+    questionId: existingGoal.questionId || null,
   };
 
   res.json({

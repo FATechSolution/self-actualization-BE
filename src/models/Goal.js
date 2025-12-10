@@ -30,6 +30,12 @@ const goalSchema = new mongoose.Schema(
       default: null,
       // order of the need within the category
     },
+    questionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Question",
+      default: null,
+      // Reference to the question that represents this need
+    },
     isCompleted: { type: Boolean, default: false },
   },
   { timestamps: true }
