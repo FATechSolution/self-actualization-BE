@@ -54,7 +54,7 @@ Users answer questions (1-7 scale) that map to Maslow's 5 need categories. The s
 
 ### Subscription Access
 - **Free Plan**: Survival, Safety (bottom 2 levels)
-- **Premium Plan**: Social, Self (middle 2 levels)
+- **Premium Plan**: Survival, Safety, Social, Self (4 categories, excludes Meta-Needs)
 - **Coach Plan**: All 5 categories (full pyramid)
 
 ---

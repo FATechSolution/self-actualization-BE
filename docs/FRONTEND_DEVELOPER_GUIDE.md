@@ -1282,9 +1282,11 @@ async function markGoalCompleted(goalId) {
 
 const user = await fetchUser();
 const availableCategories = {
-  'Free': ['Survival', 'Safety'],
-  'Premium': ['Survival', 'Safety', 'Social', 'Self'],
-  'Coach': ['Survival', 'Safety', 'Social', 'Self', 'Meta-Needs']
+  'Free': ['Survival', 'Safety'], // 2 categories
+  'Premium': ['Survival', 'Safety', 'Social', 'Self'], // 4 categories (excludes Meta-Needs)
+  'Plus': ['Survival', 'Safety', 'Social', 'Self'], // 4 categories (alias for Premium)
+  'Coach': ['Survival', 'Safety', 'Social', 'Self', 'Meta-Needs'], // All 5 categories
+  'Pro': ['Survival', 'Safety', 'Social', 'Self', 'Meta-Needs'] // All 5 categories (alias for Coach)
 }[user.currentSubscriptionType];
 
 // Only show questions from availableCategories

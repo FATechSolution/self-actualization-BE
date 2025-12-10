@@ -5,6 +5,7 @@ import Question from "../models/Questions.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateUserAchievements } from "./achievementController.js";
+import { validateCategoriesForSubscription } from "../utils/subscription.js";
 
 const GOAL_TYPES = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
 
@@ -31,6 +32,24 @@ export const createGoal = asyncHandler(async (req, res) => {
 
   if (!GOAL_TYPES.includes(type)) {
     throw new AppError(`Invalid goal type. Allowed types: ${GOAL_TYPES.join(", ")}`, 400);
+  }
+
+  // Validate category against user's subscription
+  const user = await User.findById(userId).select("currentSubscriptionType");
+  if (user && user.currentSubscriptionType) {
+    const validation = validateCategoriesForSubscription([type], user.currentSubscriptionType);
+    if (!validation.isValid) {
+      throw new AppError(validation.message, 403);
+    }
+  } else {
+    // Default to Free plan validation
+    const freeCategories = ["Survival", "Safety"];
+    if (!freeCategories.includes(type)) {
+      throw new AppError(
+        `Category "${type}" not available for Free subscription. Available: ${freeCategories.join(", ")}`,
+        403
+      );
+    }
   }
 
   // If questionId is provided directly, validate it

@@ -5,9 +5,9 @@
 // Subscription type to available categories mapping
 export const SUBSCRIPTION_CATEGORIES = {
   Free: ["Survival", "Safety"],
-  Premium: ["Social", "Self"],
-  Plus: ["Social", "Self"], // alias for Premium
-  Coach: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
+  Premium: ["Survival", "Safety", "Social", "Self"], // 4 categories (excludes Meta-Needs)
+  Plus: ["Survival", "Safety", "Social", "Self"], // alias for Premium
+  Coach: ["Survival", "Safety", "Social", "Self", "Meta-Needs"], // All 5 categories
   Pro: ["Survival", "Safety", "Social", "Self", "Meta-Needs"], // alias for Coach
 };
 
