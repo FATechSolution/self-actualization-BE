@@ -385,11 +385,12 @@ export const getNeedsByCategory = asyncHandler(async (req, res) => {
     needKey: { $ne: null },
     needLabel: { $ne: null },
   })
-    .select("needKey needLabel needOrder category")
+    .select("_id needKey needLabel needOrder category")
     .sort({ needOrder: 1, createdAt: 1 })
     .lean();
 
   // Remove duplicates based on needKey (in case there are multiple questions per need)
+  // Keep the first question's _id as questionId
   const uniqueNeedsMap = new Map();
   needs.forEach((need) => {
     if (need.needKey && !uniqueNeedsMap.has(need.needKey)) {
@@ -398,6 +399,7 @@ export const getNeedsByCategory = asyncHandler(async (req, res) => {
         needLabel: need.needLabel,
         needOrder: need.needOrder || 0,
         category: need.category,
+        questionId: need._id, // Include questionId
       });
     }
   });
