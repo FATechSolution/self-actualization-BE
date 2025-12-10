@@ -549,6 +549,29 @@ Response:
         "message": "Ask your coach about Exercise"
       }
     ],
+    "recommendedActions": [  // Alias for backward compatibility (same as recommendations)
+      {
+        "type": "learn",
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Explore Learn & Grow content for Exercise"
+      },
+      {
+        "type": "goal",
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Set a goal to improve Exercise"
+      },
+      {
+        "type": "coach",
+        "needKey": "exercise",
+        "needLabel": "Exercise",
+        "questionId": "507f1f77bcf86cd799439012",
+        "message": "Ask your coach about Exercise"
+      }
+    ],
     "primaryNeed": {
       "needKey": "exercise",
       "needLabel": "Exercise",

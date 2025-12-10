@@ -498,6 +498,7 @@ export const getNeedReport = asyncHandler(async (req, res) => {
       })),
       learningByNeed,
       recommendations, // Merged from recommendations endpoint
+      recommendedActions: recommendations, // Alias for backward compatibility
       primaryNeed: topNeed ? {
         needKey: topNeed.needKey,
         needLabel: topNeed.needLabel,
