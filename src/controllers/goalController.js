@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
 import Goal from "../models/Goal.js";
 import User from "../models/User.js";
+import Question from "../models/Questions.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateUserAchievements } from "./achievementController.js";
 
-const GOAL_TYPES = ["Career", "Health", "Personal", "Spiritual"];
+const GOAL_TYPES = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
 
 const parseDate = (value, fieldName) => {
   const date = new Date(value);
@@ -22,14 +23,52 @@ export const createGoal = asyncHandler(async (req, res) => {
     throw new AppError("User not authenticated", 401);
   }
 
-  const { title, description, startDate, endDate, type } = req.body;
+  const { title, description, startDate, endDate, type, needKey, needLabel, needOrder } = req.body;
 
-  if (!title || !startDate || !endDate || !type) {
+  if (!startDate || !endDate || !type) {
     throw new AppError("Missing required fields", 400);
   }
 
   if (!GOAL_TYPES.includes(type)) {
     throw new AppError(`Invalid goal type. Allowed types: ${GOAL_TYPES.join(", ")}`, 400);
+  }
+
+  // If needKey is provided, validate it exists and belongs to the selected category
+  let finalNeedKey = needKey || null;
+  let finalNeedLabel = needLabel || null;
+  let finalNeedOrder = needOrder || null;
+  let finalTitle = title ? title.trim() : null;
+
+  if (needKey) {
+    // Validate need exists and belongs to the selected category
+    const needQuestion = await Question.findOne({
+      needKey: needKey.trim(),
+      category: type,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (!needQuestion) {
+      throw new AppError(
+        `Need "${needKey}" not found in category "${type}" or is inactive`,
+        400
+      );
+    }
+
+    // Use need metadata from question
+    finalNeedKey = needQuestion.needKey;
+    finalNeedLabel = needQuestion.needLabel || needLabel;
+    finalNeedOrder = needQuestion.needOrder || needOrder;
+
+    // Auto-fill title with needLabel if title not provided
+    if (!finalTitle && finalNeedLabel) {
+      finalTitle = `Improve ${finalNeedLabel}`;
+    }
+  }
+
+  if (!finalTitle) {
+    throw new AppError("Title is required. Provide title or select a need.", 400);
   }
 
   const parsedStartDate = parseDate(startDate, "Start date");
@@ -41,11 +80,14 @@ export const createGoal = asyncHandler(async (req, res) => {
 
   const goal = await Goal.create({
     userId,
-    title: title.trim(),
+    title: finalTitle,
     description: description ? description.trim() : undefined,
     startDate: parsedStartDate,
     endDate: parsedEndDate,
     type,
+    needKey: finalNeedKey,
+    needLabel: finalNeedLabel,
+    needOrder: finalNeedOrder,
   });
 
   res.status(201).json({
@@ -75,9 +117,17 @@ export const getGoals = asyncHandler(async (req, res) => {
     }
   }
 
-  const goals = await Goal.find(filters).sort({ createdAt: -1 });
+  const goals = await Goal.find(filters).sort({ createdAt: -1 }).lean();
 
-  res.json({ success: true, total: goals.length, data: goals });
+  // Ensure need fields are included in response
+  const goalsWithNeeds = goals.map(goal => ({
+    ...goal,
+    needKey: goal.needKey || null,
+    needLabel: goal.needLabel || null,
+    needOrder: goal.needOrder || null,
+  }));
+
+  res.json({ success: true, total: goalsWithNeeds.length, data: goalsWithNeeds });
 });
 
 export const getGoalById = asyncHandler(async (req, res) => {
@@ -93,13 +143,21 @@ export const getGoalById = asyncHandler(async (req, res) => {
     throw new AppError("Invalid goal identifier", 400);
   }
 
-  const goal = await Goal.findOne({ _id: id, userId });
+  const goal = await Goal.findOne({ _id: id, userId }).lean();
 
   if (!goal) {
     throw new AppError("Goal not found", 404);
   }
 
-  res.json({ success: true, data: goal });
+  // Ensure need fields are included in response
+  const goalWithNeeds = {
+    ...goal,
+    needKey: goal.needKey || null,
+    needLabel: goal.needLabel || null,
+    needOrder: goal.needOrder || null,
+  };
+
+  res.json({ success: true, data: goalWithNeeds });
 });
 
 export const updateGoal = asyncHandler(async (req, res) => {
@@ -116,7 +174,7 @@ export const updateGoal = asyncHandler(async (req, res) => {
   }
 
   const updates = {};
-  const { title, description, startDate, endDate, type, isCompleted } = req.body;
+  const { title, description, startDate, endDate, type, isCompleted, needKey, needLabel, needOrder } = req.body;
 
   if (title !== undefined) {
     if (!title.trim()) {
@@ -134,6 +192,51 @@ export const updateGoal = asyncHandler(async (req, res) => {
       throw new AppError(`Invalid goal type. Allowed types: ${GOAL_TYPES.join(", ")}`, 400);
     }
     updates.type = type;
+  }
+
+  // Handle need updates
+  if (needKey !== undefined) {
+    const goalType = updates.type || existingGoal.type;
+    
+    if (needKey === null || needKey === "") {
+      // Clear need fields
+      updates.needKey = null;
+      updates.needLabel = null;
+      updates.needOrder = null;
+    } else {
+      // Validate need exists and belongs to the selected category
+      const needQuestion = await Question.findOne({
+        needKey: needKey.trim(),
+        category: goalType,
+        section: 1,
+        sectionType: "regular",
+        isActive: true,
+      }).lean();
+
+      if (!needQuestion) {
+        throw new AppError(
+          `Need "${needKey}" not found in category "${goalType}" or is inactive`,
+          400
+        );
+      }
+
+      // Use need metadata from question
+      updates.needKey = needQuestion.needKey;
+      updates.needLabel = needQuestion.needLabel || needLabel || null;
+      updates.needOrder = needQuestion.needOrder || needOrder || null;
+
+      // Auto-update title if not explicitly provided and needLabel exists
+      if (!updates.title && updates.needLabel) {
+        updates.title = `Improve ${updates.needLabel}`;
+      }
+    }
+  } else if (needLabel !== undefined || needOrder !== undefined) {
+    // If needKey not provided but needLabel/needOrder are, validate needKey exists
+    if (!existingGoal.needKey) {
+      throw new AppError("Cannot update needLabel/needOrder without needKey", 400);
+    }
+    if (needLabel !== undefined) updates.needLabel = needLabel;
+    if (needOrder !== undefined) updates.needOrder = needOrder;
   }
 
   if (isCompleted !== undefined) {
@@ -205,10 +308,19 @@ export const updateGoal = asyncHandler(async (req, res) => {
     }
   }
 
+  // Ensure need fields are included in response
+  const goalData = existingGoal.toObject ? existingGoal.toObject() : existingGoal;
+  const goalWithNeeds = {
+    ...goalData,
+    needKey: existingGoal.needKey || null,
+    needLabel: existingGoal.needLabel || null,
+    needOrder: existingGoal.needOrder || null,
+  };
+
   res.json({
     success: true,
     message: "Goal updated successfully",
-    data: existingGoal.toObject ? existingGoal.toObject() : existingGoal,
+    data: goalWithNeeds,
   });
 });
 
@@ -232,5 +344,58 @@ export const deleteGoal = asyncHandler(async (req, res) => {
   }
 
   res.json({ success: true, message: "Goal deleted successfully" });
+});
+
+// Get needs list by category (for dropdown selection)
+export const getNeedsByCategory = asyncHandler(async (req, res) => {
+  const { category } = req.params;
+
+  if (!category) {
+    throw new AppError("Category parameter is required", 400);
+  }
+
+  if (!GOAL_TYPES.includes(category)) {
+    throw new AppError(`Invalid category. Allowed categories: ${GOAL_TYPES.join(", ")}`, 400);
+  }
+
+  // Get all unique needs for this category from regular questions (section 1)
+  const needs = await Question.find({
+    category,
+    section: 1,
+    sectionType: "regular",
+    isActive: true,
+    needKey: { $ne: null },
+    needLabel: { $ne: null },
+  })
+    .select("needKey needLabel needOrder category")
+    .sort({ needOrder: 1, createdAt: 1 })
+    .lean();
+
+  // Remove duplicates based on needKey (in case there are multiple questions per need)
+  const uniqueNeedsMap = new Map();
+  needs.forEach((need) => {
+    if (need.needKey && !uniqueNeedsMap.has(need.needKey)) {
+      uniqueNeedsMap.set(need.needKey, {
+        needKey: need.needKey,
+        needLabel: need.needLabel,
+        needOrder: need.needOrder || 0,
+        category: need.category,
+      });
+    }
+  });
+
+  const uniqueNeeds = Array.from(uniqueNeedsMap.values()).sort((a, b) => {
+    if (a.needOrder !== b.needOrder) {
+      return (a.needOrder || 0) - (b.needOrder || 0);
+    }
+    return (a.needLabel || "").localeCompare(b.needLabel || "");
+  });
+
+  res.json({
+    success: true,
+    category,
+    total: uniqueNeeds.length,
+    data: uniqueNeeds,
+  });
 });
 

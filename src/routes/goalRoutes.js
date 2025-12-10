@@ -5,6 +5,7 @@ import {
   getGoalById,
   updateGoal,
   deleteGoal,
+  getNeedsByCategory,
 } from "../controllers/goalController.js";
 import { authenticate } from "../middlewares/auth.js";
 
@@ -14,6 +15,7 @@ router.use(authenticate);
 
 router.post("/", createGoal);
 router.get("/", getGoals);
+router.get("/needs/:category", getNeedsByCategory); // Must be before /:id route
 router.get("/:id", getGoalById);
 router.patch("/:id", updateGoal);
 router.delete("/:id", deleteGoal);

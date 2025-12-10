@@ -9,8 +9,26 @@ const goalSchema = new mongoose.Schema(
     endDate: { type: Date, required: true },
     type: {
       type: String,
-      enum: ["Career", "Health", "Personal", "Spiritual"],
+      enum: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
       required: true,
+    },
+    // Need-level metadata (linked to assessment needs)
+    needKey: {
+      type: String,
+      trim: true,
+      default: null,
+      // machine-friendly slug, e.g., "sleep", "exercise"
+    },
+    needLabel: {
+      type: String,
+      trim: true,
+      default: null,
+      // human-friendly label, e.g., "Sleep", "Exercise"
+    },
+    needOrder: {
+      type: Number,
+      default: null,
+      // order of the need within the category
     },
     isCompleted: { type: Boolean, default: false },
   },
