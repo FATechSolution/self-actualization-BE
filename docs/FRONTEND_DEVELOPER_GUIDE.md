@@ -336,18 +336,144 @@ Response:
   "success": true,
   "data": {
     "assessmentId": "...",
-    "categoryScores": {...},
-    "needScores": {...},
+    "categoryScores": {
+      "Survival": 5.2,
+      "Safety": 4.8,
+      "Social": 5.5,
+      "Self": 5.0,
+      "Meta-Needs": 4.5
+    },
+    "needScores": {
+      "sleep": { "score": 5.5, "needLabel": "Sleep", "category": "Survival" },
+      "exercise": { "score": 4.8, "needLabel": "Exercise", "category": "Survival" }
+    },
     "overallScore": 5.0,
     "lowestCategories": ["Safety"],
     "completedAt": "...",
     "chartMeta": {
-      "performanceBands": [...],
+      "performanceBands": [
+        {
+          "label": "Dysfunctional",
+          "subLabels": ["Neurotic", "Psychotic"],
+          "range": [1, 1.5],
+          "color": "#E63946"
+        },
+        {
+          "label": "Extremes",
+          "subLabels": ["Too much", "Too Little"],
+          "range": [1.5, 2.5],
+          "color": "#DC3545"
+        },
+        {
+          "label": "Not getting by",
+          "subLabels": ["Cravings", "Dissatisfaction"],
+          "range": [2.5, 3.5],
+          "color": "#F1C40F"
+        },
+        {
+          "label": "Doing OK",
+          "subLabels": ["Getting By", "Normal Concerns"],
+          "range": [3.5, 4.5],
+          "color": "#FFC107"
+        },
+        {
+          "label": "Getting by well",
+          "subLabels": ["Feeling Good"],
+          "range": [4.5, 5.5],
+          "color": "#90EE90"
+        },
+        {
+          "label": "Doing Good",
+          "subLabels": ["Thriving"],
+          "range": [5.5, 6.5],
+          "color": "#2ECC71"
+        },
+        {
+          "label": "Optimizing",
+          "subLabels": ["Super-Thriving"],
+          "range": [6.5, 7],
+          "color": "#27AE60"
+        },
+        {
+          "label": "Maximizing",
+          "subLabels": ["At ones very best"],
+          "range": [7, 7],
+          "color": "#1E8449"
+        }
+      ],
       "categoryDescriptions": {...}
+    },
+    "pyramidStructure": {
+      "needs": {
+        "Meta-Needs": [
+          "Cognitive needs: to know, understand, learn",
+          "Contribution needs: to make a difference",
+          "Conative needs: to choose your unique way of life",
+          "Love needs: to care and extend yourself to others",
+          "Truth needs: to know what is true, real, and authentic",
+          "Aesthetic needs: to see, enjoy, and create beauty",
+          "Expressive needs: to be and express your best self"
+        ],
+        "Self": [
+          "Importance of your voice and opinion",
+          "Honor and Dignity from colleagues",
+          "Sense of Respect for Achievements",
+          "Sense of Human dignity / Value as Person"
+        ],
+        "Social": [
+          "Group Acceptance / Connection",
+          "Bonding with Partner / Lover",
+          "Bonding with Significant People",
+          "Love / Affection",
+          "Social connection: Friends / companions"
+        ],
+        "Safety": [
+          "Sense of Control: Personal Power / efficacy",
+          "Sense of Order / Structure",
+          "Stability in Life",
+          "Career / Job Safety",
+          "Physical / Personal Safety"
+        ],
+        "Survival": [
+          "Money",
+          "Sex",
+          "Exercise",
+          "Vitality",
+          "Weight Management",
+          "Food",
+          "Sleep"
+        ]
+      },
+      "needScores": {
+        "Survival": [
+          {
+            "needLabel": "Money",
+            "needKey": "money",
+            "score": 5.2,
+            "questionId": "507f1f77bcf86cd799439011",
+            "order": 1
+          },
+          {
+            "needLabel": "Sleep",
+            "needKey": "sleep",
+            "score": 5.5,
+            "questionId": "507f1f77bcf86cd799439012",
+            "order": 7
+          }
+        ]
+      },
+      "categoryOrder": ["Survival", "Safety", "Social", "Self", "Meta-Needs"]
     }
   }
 }
 ```
+
+**Important Notes:**
+- `pyramidStructure.needs` contains the **EXACT needs list from the PDF** - use these exact labels for the pyramid
+- `pyramidStructure.needScores` maps user's assessment scores to each need with questionIds
+- `pyramidStructure.categoryOrder` shows the order from bottom (Survival) to top (Meta-Needs)
+- `chartMeta.performanceBands` contains the **EXACT performance band labels from the PDF** with subLabels
+- Use the exact words from `pyramidStructure.needs` for the pyramid visualization
 
 #### Get Need-Level Report (Merged with Recommendations)
 ```

@@ -210,13 +210,57 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
           )
         : 0);
   
-    // Define static chart metadata (bands and descriptions)
+    // Define static chart metadata (bands and descriptions) - EXACT from PDF
     const chartMeta = {
       performanceBands: [
-        { label: "Dysfunctional / Extreme", range: [1, 2], color: "#E63946" },
-        { label: "Getting By", range: [3, 4], color: "#F1C40F" },
-        { label: "Thriving", range: [5, 6], color: "#2ECC71" },
-        { label: "Maximizing", range: [7, 7], color: "#27AE60" },
+        { 
+          label: "Dysfunctional", 
+          subLabels: ["Neurotic", "Psychotic"],
+          range: [1, 1.5], 
+          color: "#E63946" 
+        },
+        { 
+          label: "Extremes", 
+          subLabels: ["Too much", "Too Little"],
+          range: [1.5, 2.5], 
+          color: "#DC3545" 
+        },
+        { 
+          label: "Not getting by", 
+          subLabels: ["Cravings", "Dissatisfaction"],
+          range: [2.5, 3.5], 
+          color: "#F1C40F" 
+        },
+        { 
+          label: "Doing OK", 
+          subLabels: ["Getting By", "Normal Concerns"],
+          range: [3.5, 4.5], 
+          color: "#FFC107" 
+        },
+        { 
+          label: "Getting by well", 
+          subLabels: ["Feeling Good"],
+          range: [4.5, 5.5], 
+          color: "#90EE90" 
+        },
+        { 
+          label: "Doing Good", 
+          subLabels: ["Thriving"],
+          range: [5.5, 6.5], 
+          color: "#2ECC71" 
+        },
+        { 
+          label: "Optimizing", 
+          subLabels: ["Super-Thriving"],
+          range: [6.5, 7], 
+          color: "#27AE60" 
+        },
+        { 
+          label: "Maximizing", 
+          subLabels: ["At ones very best"],
+          range: [7, 7], 
+          color: "#1E8449" 
+        },
       ],
       categoryDescriptions: {
         Survival: "Physical needs, health, energy, rest, and nutrition.",
@@ -226,6 +270,93 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
         "Meta-Needs": "Purpose, creativity, contribution, and self-actualization.",
       },
     };
+
+    // EXACT needs list from PDF - organized by category
+    const pyramidNeeds = {
+      "Meta-Needs": [
+        "Cognitive needs: to know, understand, learn",
+        "Contribution needs: to make a difference",
+        "Conative needs: to choose your unique way of life",
+        "Love needs: to care and extend yourself to others",
+        "Truth needs: to know what is true, real, and authentic",
+        "Aesthetic needs: to see, enjoy, and create beauty",
+        "Expressive needs: to be and express your best self"
+      ],
+      "Self": [
+        "Importance of your voice and opinion",
+        "Honor and Dignity from colleagues",
+        "Sense of Respect for Achievements",
+        "Sense of Human dignity / Value as Person"
+      ],
+      "Social": [
+        "Group Acceptance / Connection",
+        "Bonding with Partner / Lover",
+        "Bonding with Significant People",
+        "Love / Affection",
+        "Social connection: Friends / companions"
+      ],
+      "Safety": [
+        "Sense of Control: Personal Power / efficacy",
+        "Sense of Order / Structure",
+        "Stability in Life",
+        "Career / Job Safety",
+        "Physical / Personal Safety"
+      ],
+      "Survival": [
+        "Money",
+        "Sex",
+        "Exercise",
+        "Vitality",
+        "Weight Management",
+        "Food",
+        "Sleep"
+      ]
+    };
+
+    // Map needScores to pyramid needs structure with questionIds
+    const pyramidNeedScoresWithIds = {};
+    for (const [category, needs] of Object.entries(pyramidNeeds)) {
+      pyramidNeedScoresWithIds[category] = await Promise.all(needs.map(async (needLabel, index) => {
+        // Try to find matching needKey from assessment
+        const needKeyMatch = Object.keys(needScores).find(key => {
+          const scoreData = needScores[key];
+          const scoreLabel = scoreData?.needLabel || key;
+          return scoreLabel.toLowerCase().includes(needLabel.toLowerCase().split(':')[0].trim()) ||
+                 needLabel.toLowerCase().includes(scoreLabel.toLowerCase());
+        });
+
+        let score = 0;
+        let questionId = null;
+        let matchedNeedKey = null;
+
+        if (needKeyMatch) {
+          const scoreData = needScores[needKeyMatch];
+          score = scoreData?.score || 0;
+          matchedNeedKey = needKeyMatch;
+          
+          // Find questionId for this need
+          const question = await Question.findOne({
+            needKey: needKeyMatch,
+            category: category,
+            section: 1,
+            sectionType: "regular",
+            isActive: true,
+          })
+            .select("_id")
+            .lean();
+          
+          if (question) questionId = question._id;
+        }
+
+        return {
+          needLabel: needLabel,
+          needKey: matchedNeedKey,
+          score: score,
+          questionId: questionId,
+          order: index + 1
+        };
+      }));
+    }
   
     // Optional insight logic (can expand later)
     const lowestCategories = Object.entries(categoryScores)
@@ -244,6 +375,12 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
         lowestCategories,
         completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
         chartMeta,
+        // NEW: Pyramid structure with exact needs from PDF
+        pyramidStructure: {
+          needs: pyramidNeeds, // Exact needs list by category
+          needScores: pyramidNeedScoresWithIds, // Need scores mapped to pyramid needs with questionIds
+          categoryOrder: ["Survival", "Safety", "Social", "Self", "Meta-Needs"] // Bottom to top order
+        }
       },
     });
   });
