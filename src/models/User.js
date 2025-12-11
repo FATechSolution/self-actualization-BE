@@ -101,6 +101,24 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // FCM Push Notification fields
+    fcmToken: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    fcmTokens: {
+      type: [String],
+      default: [],
+    },
+    notificationSettings: {
+      goalReminders: { type: Boolean, default: true },
+      assessmentReminders: { type: Boolean, default: true },
+    },
+    assessmentReminderSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

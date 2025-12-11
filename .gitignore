@@ -12,6 +12,14 @@ ARCHITECTURE_ANALYSIS.md
 .env.test.local
 .env.production.local
 
+# Firebase Service Account Keys (JSON files)
+config/*.json
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json
+
 # IDE
 .vscode/
 .idea/

@@ -6,6 +6,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { AppError } from "../utils/errorHandler.js";
 import { calculateUserAchievements } from "./achievementController.js";
 import { validateCategoriesForSubscription } from "../utils/subscription.js";
+import { sendNotificationToUser } from "../services/notificationService.js";
 
 const GOAL_TYPES = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
 
@@ -371,6 +372,21 @@ export const updateGoal = asyncHandler(async (req, res) => {
           coachingOfferTriggeredAt: new Date(),
         });
       }
+
+      // Send goal completion notification
+      sendNotificationToUser(
+        userId,
+        'Goal Completed! 🎉',
+        `Congratulations! You've completed your goal: "${existingGoal.title}"`,
+        {
+          type: 'goal_completed',
+          goalId: existingGoal._id.toString(),
+          screen: '/goals',
+        }
+      ).catch((err) => {
+        console.error('Error sending goal completion notification:', err);
+        // Don't fail the request if notification fails
+      });
     } catch (error) {
       // Log error but don't fail the request
       console.error("Error triggering achievement recalculation:", error);
