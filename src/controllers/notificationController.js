@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { AppError } from '../utils/errorHandler.js';
+import { sendNotificationToUser } from '../services/notificationService.js';
 
 /**
  * Save/Update FCM Token
@@ -145,6 +146,70 @@ export const getNotificationSettings = asyncHandler(async (req, res) => {
         assessmentReminders: true,
       },
       hasFCMToken: !!user.fcmToken,
+    },
+  });
+});
+
+/**
+ * Send Test Notification
+ * POST /api/notifications/test
+ * This endpoint allows frontend developers to test notifications
+ */
+export const sendTestNotification = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { title, body, type } = req.body;
+
+  // Default values if not provided
+  const notificationTitle = title || 'Test Notification';
+  const notificationBody = body || 'This is a test notification from the backend';
+  const notificationType = type || 'test';
+
+  // Check if user has FCM token
+  const user = await User.findById(userId).select('fcmToken fcmTokens');
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  const tokens = user.fcmTokens && user.fcmTokens.length > 0 
+    ? user.fcmTokens 
+    : (user.fcmToken ? [user.fcmToken] : []);
+
+  if (tokens.length === 0) {
+    throw new AppError(
+      'No FCM token found. Please save your FCM token first using POST /api/notifications/fcm-token',
+      400
+    );
+  }
+
+  // Send test notification
+  const result = await sendNotificationToUser(
+    userId,
+    notificationTitle,
+    notificationBody,
+    {
+      type: notificationType,
+      test: 'true',
+      timestamp: new Date().toISOString(),
+    }
+  );
+
+  if (!result.success) {
+    throw new AppError(
+      result.error || 'Failed to send test notification',
+      500
+    );
+  }
+
+  res.json({
+    success: true,
+    message: 'Test notification sent successfully',
+    data: {
+      title: notificationTitle,
+      body: notificationBody,
+      type: notificationType,
+      sentToDevices: result.successCount,
+      totalDevices: result.totalCount,
+      results: result.results,
     },
   });
 });

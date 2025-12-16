@@ -33,6 +33,20 @@ Body:
 ```
 - Removes this device token from `fcmTokens`.
 
+3) **Send Test Notification** (for testing)  
+`POST /api/notifications/test`  
+Body (all optional):
+```json
+{
+  "title": "Test Notification",
+  "body": "This is a test notification",
+  "type": "test"
+}
+```
+- Sends a test notification to all devices registered for the authenticated user.
+- Use this to verify FCM setup and token registration.
+- **Important**: User must have saved FCM token first (use endpoint #1).
+
 ## Notification payload shape (what the app receives)
 ```json
 {
@@ -66,25 +80,77 @@ Body:
 - Backend schedules daily jobs. On platforms without server-side cron (e.g., Vercel free), an external cron/worker must hit the server; confirm with backend where deployed.
 
 ## Quick test scripts (Postman/curl)
-Save token:
+
+### Step 1: Save FCM Token
 ```
 POST {{baseUrl}}/api/notifications/fcm-token
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 {
-  "fcmToken": "test-token-123"
+  "fcmToken": "your-actual-fcm-token-from-flutter"
 }
 ```
 
-Remove token:
+### Step 2: Send Test Notification
+```
+POST {{baseUrl}}/api/notifications/test
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+{
+  "title": "Test Notification",
+  "body": "This is a test notification from backend",
+  "type": "test"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test notification sent successfully",
+  "data": {
+    "title": "Test Notification",
+    "body": "This is a test notification from backend",
+    "type": "test",
+    "sentToDevices": 1,
+    "totalDevices": 1,
+    "results": [
+      {
+        "token": "your-fcm-token",
+        "success": true,
+        "messageId": "projects/.../messages/..."
+      }
+    ]
+  }
+}
+```
+
+### Step 3: Remove Token (optional)
 ```
 DELETE {{baseUrl}}/api/notifications/fcm-token
 Authorization: Bearer {{authToken}}
 Content-Type: application/json
 {
-  "fcmToken": "test-token-123"
+  "fcmToken": "your-actual-fcm-token-from-flutter"
 }
 ```
+
+## Testing Flow (Complete Steps)
+
+1. **Get FCM Token from Flutter App**
+   - Use Firebase Cloud Messaging plugin to get device token
+   - Example: `FirebaseMessaging.instance.getToken()`
+
+2. **Save Token to Backend**
+   - Call `POST /api/notifications/fcm-token` with the token
+
+3. **Send Test Notification**
+   - Call `POST /api/notifications/test` to verify everything works
+   - You should receive notification on your device
+
+4. **Verify Notification Received**
+   - Check device notification tray
+   - Tap notification to verify navigation works
 
 ## FAQs
 - Multiple devices? Supported (array of tokens).

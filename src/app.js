@@ -140,6 +140,13 @@ app.get("/", (req, res) => {
         getFocusStreak: "GET /api/achievements/streak",
         getLeaderboard: "GET /api/achievements/leaderboard",
       },
+      notifications: {
+        saveFCMToken: "POST /api/notifications/fcm-token",
+        removeFCMToken: "DELETE /api/notifications/fcm-token",
+        getSettings: "GET /api/notifications/settings",
+        updateSettings: "PATCH /api/notifications/settings",
+        testNotification: "POST /api/notifications/test",
+      },
       adminAuth: {
         register: "POST /api/admin/auth/register",
         login: "POST /api/admin/auth/login",
