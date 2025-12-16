@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
@@ -229,7 +230,12 @@ export const getNotifications = asyncHandler(async (req, res) => {
   // Build query
   const query = { userId };
   
+  // Validate notification type if provided
+  const validTypes = ['goal_completed', 'goal_reminder', 'assessment_reminder', 'test', 'general'];
   if (type) {
+    if (!validTypes.includes(type)) {
+      throw new AppError(`Invalid notification type. Allowed types: ${validTypes.join(', ')}`, 400);
+    }
     query.type = type;
   }
   
@@ -237,9 +243,18 @@ export const getNotifications = asyncHandler(async (req, res) => {
     query.isRead = isRead === 'true';
   }
 
-  // Pagination
+  // Pagination validation
   const pageNum = parseInt(page, 10);
   const limitNum = parseInt(limit, 10);
+  
+  if (isNaN(pageNum) || pageNum < 1) {
+    throw new AppError('Page must be a positive integer', 400);
+  }
+  
+  if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
+    throw new AppError('Limit must be a positive integer between 1 and 100', 400);
+  }
+  
   const skip = (pageNum - 1) * limitNum;
 
   // Get notifications
@@ -248,6 +263,18 @@ export const getNotifications = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(limitNum)
     .lean();
+  
+  // Convert Map to Object for each notification (since .lean() bypasses toJSON transform)
+  const notificationsWithData = notifications.map(notif => {
+    if (notif.data && notif.data instanceof Map) {
+      notif.data = Object.fromEntries(notif.data);
+    } else if (notif.data && typeof notif.data === 'object' && notif.data.constructor === Object) {
+      // Already an object, keep as is
+    } else if (!notif.data) {
+      notif.data = {};
+    }
+    return notif;
+  });
 
   // Get total count
   const total = await Notification.countDocuments(query);
@@ -261,7 +288,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
   res.json({
     success: true,
     data: {
-      notifications,
+      notifications: notificationsWithData,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -281,6 +308,11 @@ export const getNotificationById = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   const { id } = req.params;
 
+  // Validate ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError('Invalid notification identifier', 400);
+  }
+
   const notification = await Notification.findOne({
     _id: id,
     userId,
@@ -290,10 +322,16 @@ export const getNotificationById = asyncHandler(async (req, res) => {
     throw new AppError('Notification not found', 404);
   }
 
+  // Convert Map to Object if needed
+  const notificationData = notification.toObject ? notification.toObject() : notification;
+  if (notificationData.data && notificationData.data instanceof Map) {
+    notificationData.data = Object.fromEntries(notificationData.data);
+  }
+
   res.json({
     success: true,
     data: {
-      notification,
+      notification: notificationData,
     },
   });
 });
@@ -306,6 +344,11 @@ export const getNotificationById = asyncHandler(async (req, res) => {
 export const markNotificationAsRead = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   const { id } = req.params;
+
+  // Validate ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError('Invalid notification identifier', 400);
+  }
 
   const notification = await Notification.findOne({
     _id: id,
@@ -320,11 +363,17 @@ export const markNotificationAsRead = asyncHandler(async (req, res) => {
   notification.readAt = new Date();
   await notification.save();
 
+  // Convert Map to Object if needed
+  const notificationData = notification.toObject ? notification.toObject() : notification;
+  if (notificationData.data && notificationData.data instanceof Map) {
+    notificationData.data = Object.fromEntries(notificationData.data);
+  }
+
   res.json({
     success: true,
     message: 'Notification marked as read',
     data: {
-      notification,
+      notification: notificationData,
     },
   });
 });
@@ -366,6 +415,11 @@ export const deleteNotification = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   const { id } = req.params;
 
+  // Validate ObjectId format
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new AppError('Invalid notification identifier', 400);
+  }
+
   const notification = await Notification.findOneAndDelete({
     _id: id,
     userId,
@@ -391,7 +445,13 @@ export const deleteAllNotifications = asyncHandler(async (req, res) => {
   const { type } = req.query;
 
   const query = { userId };
+  
+  // Validate notification type if provided
+  const validTypes = ['goal_completed', 'goal_reminder', 'assessment_reminder', 'test', 'general'];
   if (type) {
+    if (!validTypes.includes(type)) {
+      throw new AppError(`Invalid notification type. Allowed types: ${validTypes.join(', ')}`, 400);
+    }
     query.type = type;
   }
 

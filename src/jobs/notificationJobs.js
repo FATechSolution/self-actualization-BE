@@ -76,20 +76,28 @@ const checkAssessmentReminders = async () => {
     // 2. Haven't been sent a reminder in last 24 hours
     // 3. Have assessment reminders enabled
     const usersNeedingReminder = await User.find({
-      $or: [
-        { hasCompletedAssessment: false },
-        { 
-          hasCompletedAssessment: true,
-          assessmentCompletedAt: { $lt: threeDaysAgo }
+      $and: [
+        {
+          $or: [
+            { hasCompletedAssessment: false },
+            { 
+              hasCompletedAssessment: true,
+              assessmentCompletedAt: { $lt: threeDaysAgo }
+            }
+          ]
+        },
+        {
+          $or: [
+            { assessmentReminderSentAt: null },
+            { assessmentReminderSentAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // More than 1 day ago
+          ]
+        },
+        {
+          $or: [
+            { 'notificationSettings.assessmentReminders': { $ne: false } },
+            { notificationSettings: null } // Default to true if not set
+          ]
         }
-      ],
-      $or: [
-        { assessmentReminderSentAt: null },
-        { assessmentReminderSentAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) } } // More than 1 day ago
-      ],
-      $or: [
-        { 'notificationSettings.assessmentReminders': { $ne: false } },
-        { notificationSettings: null } // Default to true if not set
       ]
     }).select('_id fcmToken fcmTokens notificationSettings assessmentCompletedAt assessmentReminderSentAt');
 

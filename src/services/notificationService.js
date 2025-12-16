@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import admin from '../config/fcm.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
@@ -110,12 +111,18 @@ export const sendNotificationToUser = async (userId, title, body, data = {}) => 
     // Save notification to database (only if at least one notification was sent successfully)
     if (successCount > 0) {
       try {
+        // Ensure userId is valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+          throw new Error('Invalid userId format');
+        }
+        
         const notificationData = {
           userId,
           title,
           body,
           type: data.type || 'general',
-          data: new Map(Object.entries(data)),
+          // Only create Map if data has entries, otherwise use empty object
+          data: Object.keys(data).length > 0 ? new Map(Object.entries(data)) : new Map(),
         };
         
         // Get the first successful message ID if available
