@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { asyncHandler } from '../middlewares/asyncHandler.js';
 import { AppError } from '../utils/errorHandler.js';
 import { sendNotificationToUser } from '../services/notificationService.js';
@@ -212,6 +213,195 @@ export const sendTestNotification = asyncHandler(async (req, res) => {
       sentToDevices: result.successCount,
       totalDevices: result.totalCount,
       results: result.results,
+    },
+  });
+});
+
+/**
+ * Get all notifications for the authenticated user
+ * GET /api/notifications
+ * Query params: page, limit, type, isRead
+ */
+export const getNotifications = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { page = 1, limit = 20, type, isRead } = req.query;
+
+  // Build query
+  const query = { userId };
+  
+  if (type) {
+    query.type = type;
+  }
+  
+  if (isRead !== undefined) {
+    query.isRead = isRead === 'true';
+  }
+
+  // Pagination
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+  const skip = (pageNum - 1) * limitNum;
+
+  // Get notifications
+  const notifications = await Notification.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limitNum)
+    .lean();
+
+  // Get total count
+  const total = await Notification.countDocuments(query);
+
+  // Get unread count
+  const unreadCount = await Notification.countDocuments({
+    userId,
+    isRead: false,
+  });
+
+  res.json({
+    success: true,
+    data: {
+      notifications,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.ceil(total / limitNum),
+      },
+      unreadCount,
+    },
+  });
+});
+
+/**
+ * Get a single notification by ID
+ * GET /api/notifications/:id
+ */
+export const getNotificationById = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { id } = req.params;
+
+  const notification = await Notification.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!notification) {
+    throw new AppError('Notification not found', 404);
+  }
+
+  res.json({
+    success: true,
+    data: {
+      notification,
+    },
+  });
+});
+
+/**
+ * Mark notification(s) as read
+ * PATCH /api/notifications/:id/read (single)
+ * PATCH /api/notifications/read-all (all)
+ */
+export const markNotificationAsRead = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { id } = req.params;
+
+  const notification = await Notification.findOne({
+    _id: id,
+    userId,
+  });
+
+  if (!notification) {
+    throw new AppError('Notification not found', 404);
+  }
+
+  notification.isRead = true;
+  notification.readAt = new Date();
+  await notification.save();
+
+  res.json({
+    success: true,
+    message: 'Notification marked as read',
+    data: {
+      notification,
+    },
+  });
+});
+
+/**
+ * Mark all notifications as read
+ * PATCH /api/notifications/read-all
+ */
+export const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
+  const result = await Notification.updateMany(
+    {
+      userId,
+      isRead: false,
+    },
+    {
+      $set: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    }
+  );
+
+  res.json({
+    success: true,
+    message: 'All notifications marked as read',
+    data: {
+      updatedCount: result.modifiedCount,
+    },
+  });
+});
+
+/**
+ * Delete a single notification
+ * DELETE /api/notifications/:id
+ */
+export const deleteNotification = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { id } = req.params;
+
+  const notification = await Notification.findOneAndDelete({
+    _id: id,
+    userId,
+  });
+
+  if (!notification) {
+    throw new AppError('Notification not found', 404);
+  }
+
+  res.json({
+    success: true,
+    message: 'Notification deleted successfully',
+  });
+});
+
+/**
+ * Delete all notifications for the user
+ * DELETE /api/notifications
+ * Query params: type (optional - delete only specific type)
+ */
+export const deleteAllNotifications = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { type } = req.query;
+
+  const query = { userId };
+  if (type) {
+    query.type = type;
+  }
+
+  const result = await Notification.deleteMany(query);
+
+  res.json({
+    success: true,
+    message: 'All notifications deleted successfully',
+    data: {
+      deletedCount: result.deletedCount,
     },
   });
 });

@@ -152,8 +152,162 @@ Content-Type: application/json
    - Check device notification tray
    - Tap notification to verify navigation works
 
+## Notification Management (CRUD Operations)
+
+All notifications sent via FCM are automatically saved to the database. You can retrieve, mark as read, and delete them.
+
+### 1. Get All Notifications
+`GET /api/notifications`
+
+**Query Parameters:**
+- `page` (optional, default: 1) - Page number
+- `limit` (optional, default: 20) - Items per page
+- `type` (optional) - Filter by type: `goal_completed`, `goal_reminder`, `assessment_reminder`, `test`, `general`
+- `isRead` (optional) - Filter by read status: `true` or `false`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "notifications": [
+      {
+        "_id": "...",
+        "userId": "...",
+        "title": "Goal Reminder",
+        "body": "Have you completed your goal: \"Improve Sleep\"?",
+        "type": "goal_reminder",
+        "data": {
+          "type": "goal_reminder",
+          "goalId": "...",
+          "screen": "/goals"
+        },
+        "isRead": false,
+        "readAt": null,
+        "fcmMessageId": "...",
+        "createdAt": "2025-01-15T10:30:00.000Z",
+        "updatedAt": "2025-01-15T10:30:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "totalPages": 3
+    },
+    "unreadCount": 12
+  }
+}
+```
+
+### 2. Get Single Notification
+`GET /api/notifications/:id`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "notification": {
+      "_id": "...",
+      "title": "Goal Reminder",
+      "body": "...",
+      "type": "goal_reminder",
+      "isRead": false,
+      "data": {...},
+      "createdAt": "...",
+      "updatedAt": "..."
+    }
+  }
+}
+```
+
+### 3. Mark Notification as Read
+`PATCH /api/notifications/:id/read`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Notification marked as read",
+  "data": {
+    "notification": {
+      "_id": "...",
+      "isRead": true,
+      "readAt": "2025-01-15T10:35:00.000Z",
+      ...
+    }
+  }
+}
+```
+
+### 4. Mark All Notifications as Read
+`PATCH /api/notifications/read-all`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All notifications marked as read",
+  "data": {
+    "updatedCount": 12
+  }
+}
+```
+
+### 5. Delete Single Notification
+`DELETE /api/notifications/:id`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Notification deleted successfully"
+}
+```
+
+### 6. Delete All Notifications
+`DELETE /api/notifications`
+
+**Query Parameters:**
+- `type` (optional) - Delete only specific type (e.g., `goal_reminder`)
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "All notifications deleted successfully",
+  "data": {
+    "deletedCount": 45
+  }
+}
+```
+
+## Complete API Endpoints Summary
+
+### FCM Token Management
+- `POST /api/notifications/fcm-token` - Save/update FCM token
+- `DELETE /api/notifications/fcm-token` - Remove FCM token
+
+### Notification Settings
+- `GET /api/notifications/settings` - Get notification settings
+- `PATCH /api/notifications/settings` - Update notification settings
+
+### Notification Management
+- `GET /api/notifications` - Get all notifications (with pagination & filters)
+- `GET /api/notifications/:id` - Get single notification
+- `PATCH /api/notifications/:id/read` - Mark notification as read
+- `PATCH /api/notifications/read-all` - Mark all notifications as read
+- `DELETE /api/notifications/:id` - Delete single notification
+- `DELETE /api/notifications` - Delete all notifications (optional type filter)
+
+### Testing
+- `POST /api/notifications/test` - Send test notification
+
 ## FAQs
 - Multiple devices? Supported (array of tokens).
 - Invalid tokens? Backend auto-removes when FCM reports invalid/expired.
 - Do I need question/goal IDs? Only for navigation; backend includes `goalId` in goal-related notifications.
+- Are notifications stored? Yes, all sent notifications are automatically saved to the database for retrieval.
+- How to show unread count? Use the `unreadCount` field from `GET /api/notifications` response.
 

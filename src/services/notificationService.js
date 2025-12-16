@@ -1,5 +1,6 @@
 import admin from '../config/fcm.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 
 /**
  * Send FCM notification to a single token
@@ -78,11 +79,13 @@ export const sendNotificationToUser = async (userId, title, body, data = {}) => 
     }
 
     // Check notification settings
-    if (data.type === 'goal' && user.notificationSettings?.goalReminders === false) {
+    if ((data.type === 'goal_completed' || data.type === 'goal_reminder') && 
+        user.notificationSettings?.goalReminders === false) {
       return { success: false, error: 'User disabled goal reminders' };
     }
     
-    if (data.type === 'assessment' && user.notificationSettings?.assessmentReminders === false) {
+    if (data.type === 'assessment_reminder' && 
+        user.notificationSettings?.assessmentReminders === false) {
       return { success: false, error: 'User disabled assessment reminders' };
     }
 
@@ -103,6 +106,31 @@ export const sendNotificationToUser = async (userId, title, body, data = {}) => 
     }
 
     const successCount = results.filter(r => r.success).length;
+    
+    // Save notification to database (only if at least one notification was sent successfully)
+    if (successCount > 0) {
+      try {
+        const notificationData = {
+          userId,
+          title,
+          body,
+          type: data.type || 'general',
+          data: new Map(Object.entries(data)),
+        };
+        
+        // Get the first successful message ID if available
+        const firstSuccess = results.find(r => r.success && r.messageId);
+        if (firstSuccess?.messageId) {
+          notificationData.fcmMessageId = firstSuccess.messageId;
+        }
+        
+        await Notification.create(notificationData);
+      } catch (dbError) {
+        // Log error but don't fail the notification send
+        console.error('❌ Error saving notification to database:', dbError);
+      }
+    }
+    
     return { 
       success: successCount > 0, 
       results,
