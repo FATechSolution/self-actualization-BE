@@ -157,7 +157,9 @@ export const getNotificationSettings = asyncHandler(async (req, res) => {
  */
 export const sendTestNotification = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
-  const { title, body, type } = req.body;
+  
+  // Safely destructure req.body with default empty object
+  const { title, body, type } = req.body || {};
 
   // Default values if not provided
   const notificationTitle = title || 'Test Notification';
