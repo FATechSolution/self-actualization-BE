@@ -35,12 +35,18 @@ const userSchema = new mongoose.Schema(
     },
     oauthProvider: {
       type: String,
-      enum: ["google", "facebook", null],
+      enum: ["google", "facebook", "apple", null],
       default: null,
     },
     oauthId: {
       type: String,
       default: null,
+    },
+    firebaseUid: {
+      type: String,
+      default: null,
+      sparse: true, // Allow null values but enforce uniqueness for non-null
+      unique: true,
     },
     avatar: {
       type: String,
@@ -135,6 +141,7 @@ const userSchema = new mongoose.Schema(
 // Index for faster queries
 userSchema.index({ email: 1 });
 userSchema.index({ oauthProvider: 1, oauthId: 1 });
+userSchema.index({ firebaseUid: 1 });
 
 // Hash password before saving (only for non-OAuth users)
 userSchema.pre("save", async function (next) {

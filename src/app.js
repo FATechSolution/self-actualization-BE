@@ -81,7 +81,8 @@ app.get("/", (req, res) => {
       auth: {
         register: "POST /api/auth/register",
         login: "POST /api/auth/login",
-        oauth: "POST /api/auth/oauth",
+        firebaseLogin: "POST /api/auth/firebase-login (Google/Apple)",
+        oauth: "POST /api/auth/oauth (Legacy)",
         forgotPassword: "POST /api/auth/forgot-password",
         resetPassword: "POST /api/auth/reset-password",
         verifyResetToken: "POST /api/auth/verify-reset-token",

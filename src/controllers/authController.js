@@ -5,6 +5,7 @@ import { asyncHandler } from "../middlewares/asyncHandler.js";
 import { isValidEmail, validatePassword, validateName } from "../utils/validation.js";
 import { sendPasswordResetOTPEmail } from "../utils/email.js";
 import { uploadImageToCloudinary } from "../utils/cloudinary.js";
+import admin from "../config/fcm.js";
 import crypto from "crypto";
 
 /**
@@ -145,9 +146,139 @@ export const login = asyncHandler(async (req, res) => {
 });
 
 /**
+ * @route   POST /api/auth/firebase-login
+ * @desc    Authenticate user with Firebase ID token (Google/Apple Sign-In)
+ * @access  Public
+ */
+export const firebaseLogin = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+
+  // Validation
+  if (!idToken) {
+    throw new AppError("Firebase ID token is required", 400);
+  }
+
+  let decodedToken;
+  try {
+    // Verify Firebase ID token
+    decodedToken = await admin.auth().verifyIdToken(idToken);
+  } catch (error) {
+    console.error("Firebase token verification error:", error);
+    throw new AppError("Invalid or expired Firebase token", 401);
+  }
+
+  // Extract user info from Firebase token
+  const { uid, email, name, picture, firebase } = decodedToken;
+  
+  if (!email) {
+    throw new AppError("Email not found in Firebase token", 400);
+  }
+
+  // Determine OAuth provider from Firebase sign-in method
+  const signInProvider = firebase?.sign_in_provider || "firebase";
+  let oauthProvider = null;
+  
+  if (signInProvider.includes("google")) {
+    oauthProvider = "google";
+  } else if (signInProvider.includes("apple")) {
+    oauthProvider = "apple";
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // Find existing user by Firebase UID or email
+  let user = await User.findOne({
+    $or: [
+      { firebaseUid: uid },
+      { email: normalizedEmail }
+    ]
+  });
+
+  if (user) {
+    // Update existing user with Firebase info if not already set
+    let needsUpdate = false;
+
+    if (!user.firebaseUid) {
+      user.firebaseUid = uid;
+      needsUpdate = true;
+    }
+
+    if (!user.isOAuthUser) {
+      user.isOAuthUser = true;
+      needsUpdate = true;
+    }
+
+    if (oauthProvider && user.oauthProvider !== oauthProvider) {
+      user.oauthProvider = oauthProvider;
+      needsUpdate = true;
+    }
+
+    // Update name if provided and user doesn't have one
+    if (name && name.trim() && (!user.name || user.name === normalizedEmail.split("@")[0])) {
+      user.name = name.trim();
+      needsUpdate = true;
+    }
+
+    // Update avatar if provided and different
+    if (picture && picture !== user.avatar) {
+      user.avatar = picture;
+      needsUpdate = true;
+    }
+
+    user.lastLogin = new Date();
+    
+    if (needsUpdate) {
+      await user.save({ validateBeforeSave: false });
+    } else {
+      // Just update lastLogin without triggering validation
+      await User.findByIdAndUpdate(user._id, { lastLogin: new Date() });
+    }
+  } else {
+    // Create new user from Firebase authentication
+    user = await User.create({
+      name: name ? name.trim() : normalizedEmail.split("@")[0],
+      email: normalizedEmail,
+      firebaseUid: uid,
+      isOAuthUser: true,
+      oauthProvider,
+      avatar: picture || null,
+      isEmailVerified: true, // Firebase emails are verified
+      lastLogin: new Date(),
+    });
+  }
+
+  // Generate JWT token for API authentication
+  const token = generateToken({
+    userId: user._id.toString(),
+    email: user.email,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Firebase authentication successful",
+    data: {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isOAuthUser: user.isOAuthUser,
+        oauthProvider: user.oauthProvider,
+        avatar: user.avatar,
+        hasCompletedAssessment: user.hasCompletedAssessment || false,
+        assessmentCompletedAt: user.assessmentCompletedAt || null,
+        currentSubscriptionType: user.currentSubscriptionType || "Free",
+        lastLogin: user.lastLogin,
+      },
+      token,
+    },
+  });
+});
+
+/**
  * @route   POST /api/auth/oauth
  * @desc    Store or update OAuth user data (called from frontend after OAuth)
  * @access  Public
+ * @deprecated Use /api/auth/firebase-login instead for Firebase authentication
  */
 export const oauthCallback = asyncHandler(async (req, res) => {
   const { name, email, oauthProvider, oauthId, avatar } = req.body;
@@ -157,8 +288,8 @@ export const oauthCallback = asyncHandler(async (req, res) => {
     throw new AppError("Please provide email, oauthProvider, and oauthId", 400);
   }
 
-  if (!["google", "facebook"].includes(oauthProvider.toLowerCase())) {
-    throw new AppError("Invalid OAuth provider. Supported: google, facebook", 400);
+  if (!["google", "facebook", "apple"].includes(oauthProvider.toLowerCase())) {
+    throw new AppError("Invalid OAuth provider. Supported: google, facebook, apple", 400);
   }
 
   if (!isValidEmail(email)) {

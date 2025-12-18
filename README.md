@@ -184,6 +184,16 @@ self-actualization-analysis/
 └── README.md                 # This file
 ```
 
+## 📚 Documentation
+
+### For Flutter Developers
+- **[Firebase Auth - Quick Guide](./docs/FRONTEND_FIREBASE_AUTH.md)** - 🆕 Simple guide for Google/Apple login integration
+- [Notifications Guide](./docs/NOTIFICATIONS_FRONTEND.md) - Push notification integration
+
+### Detailed Documentation
+- [Firebase Authentication (Complete)](./docs/FIREBASE_AUTH_INTEGRATION.md) - Detailed Google/Apple Sign-In guide
+- [Firebase Auth Summary](./docs/FIREBASE_AUTH_SUMMARY.md) - Backend implementation details
+
 ## Security Notes
 
 - Never commit `.env` file to version control

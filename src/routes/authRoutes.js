@@ -3,6 +3,7 @@ import multer from "multer";
 import {
   register,
   login,
+  firebaseLogin,
   oauthCallback,
   getCurrentUser,
   updateProfile,
@@ -26,7 +27,8 @@ const upload = multer({
 // Public routes
 router.post("/register", register);
 router.post("/login", login);
-router.post("/oauth", oauthCallback);
+router.post("/firebase-login", firebaseLogin); // Firebase Authentication (Google/Apple)
+router.post("/oauth", oauthCallback); // Legacy OAuth endpoint
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/verify-reset-token", verifyResetToken);
