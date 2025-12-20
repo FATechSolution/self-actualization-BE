@@ -41,14 +41,45 @@ const questionSchema = new mongoose.Schema(
     },
     sectionType: {
       type: String,
-      enum: ["regular", "V", "Q"],
+      enum: ["regular", "V", "Q", "Quality", "Volume"],
       default: "regular",
+      // "V" and "Q" are legacy, new questions use "Quality" and "Volume"
     },
     parentQuestionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Question",
       default: null,
-      // For V/Q questions, this links to the parent question from section 1
+      // For V/Q/Quality/Volume questions, this links to the parent question from section 1
+    },
+    // Quality Sub-Question (customized for each need)
+    qualitySubQuestion: {
+      questionText: {
+        type: String,
+        trim: true,
+        default: null,
+        // e.g., "How would you rate the quality of your sleep last night?"
+      },
+      ratingOptions: {
+        type: [String],
+        default: [],
+        // Custom rating options for this specific need's quality
+        // e.g., ["1 = Extremely poor (restless, frequently waking, unrefreshing)", ...]
+      },
+    },
+    // Volume Sub-Question (customized for each need)
+    volumeSubQuestion: {
+      questionText: {
+        type: String,
+        trim: true,
+        default: null,
+        // e.g., "How many hours of sleep did you get last night?"
+      },
+      ratingOptions: {
+        type: [String],
+        default: [],
+        // Custom rating options for this specific need's volume
+        // e.g., ["1 = Less than 4 hours", "2 = 4-5 hours", ...]
+      },
     },
     sectionOrder: {
       type: Number,

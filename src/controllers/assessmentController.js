@@ -88,6 +88,22 @@ export const submitAssessment = asyncHandler(async (req, res) => {
         continue;
       }
 
+      // Get quality and volume responses if provided (for main questions)
+      const qualityResponse = response.qualityResponse !== undefined 
+        ? Number(response.qualityResponse) 
+        : null;
+      const volumeResponse = response.volumeResponse !== undefined 
+        ? Number(response.volumeResponse) 
+        : null;
+
+      // Validate quality/volume responses if provided
+      if (qualityResponse !== null && (Number.isNaN(qualityResponse) || qualityResponse < VALID_SCORE_MIN || qualityResponse > VALID_SCORE_MAX)) {
+        continue; // Skip invalid quality response
+      }
+      if (volumeResponse !== null && (Number.isNaN(volumeResponse) || volumeResponse < VALID_SCORE_MIN || volumeResponse > VALID_SCORE_MAX)) {
+        continue; // Skip invalid volume response
+      }
+
       validResponses.push({
         questionId: question._id,
         selectedOption: score,
@@ -96,6 +112,8 @@ export const submitAssessment = asyncHandler(async (req, res) => {
         needLabel: question.needLabel || null,
         sectionType: question.sectionType || "regular",
         parentQuestionId: question.parentQuestionId || null,
+        qualityResponse: qualityResponse,
+        volumeResponse: volumeResponse,
       });
 
       categoryTotals[question.category] = (categoryTotals[question.category] || 0) + score;
@@ -375,6 +393,8 @@ export const getLatestAssessment = asyncHandler(async (req, res) => {
         lowestCategories,
         completedAt: latestAssessment.createdAt || latestAssessment.completedAt,
         chartMeta,
+        // Responses include qualityResponse and volumeResponse for main questions
+        responses: latestAssessment.responses || [],
         // NEW: Pyramid structure with exact needs from PDF
         pyramidStructure: {
           needs: pyramidNeeds, // Exact needs list by category

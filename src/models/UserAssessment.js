@@ -34,12 +34,21 @@ const userAssessmentSchema = new mongoose.Schema(
         },
         sectionType: {
           type: String,
-          enum: ["regular", "V", "Q"],
+          enum: ["regular", "V", "Q", "Quality", "Volume"],
           default: "regular",
         },
         parentQuestionId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "Question",
+          default: null,
+        },
+        // Quality and Volume sub-question responses (for main questions only)
+        qualityResponse: {
+          type: Number, // 1-7 rating for quality sub-question
+          default: null,
+        },
+        volumeResponse: {
+          type: Number, // 1-7 rating for volume sub-question
           default: null,
         },
       },

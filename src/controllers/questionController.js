@@ -82,7 +82,7 @@ export const getQuestions = asyncHandler(async (req, res) => {
 
   // Add sectionType filter if provided
   if (sectionType !== undefined) {
-    const validSectionTypes = ["regular", "V", "Q"];
+    const validSectionTypes = ["regular", "V", "Q", "Quality", "Volume"];
     if (validSectionTypes.includes(sectionType)) {
       filters.sectionType = sectionType;
     } else {
