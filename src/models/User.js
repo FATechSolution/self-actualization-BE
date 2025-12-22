@@ -44,9 +44,11 @@ const userSchema = new mongoose.Schema(
     },
     firebaseUid: {
       type: String,
-      default: null,
-      sparse: true, // Allow null values but enforce uniqueness for non-null
-      unique: true,
+      // IMPORTANT:
+      // - No default value here, so for non-Firebase users the field is completely absent
+      // - Combined with sparse+unique index in MongoDB, this prevents duplicate null issues
+      sparse: true, // Only documents that actually have firebaseUid are indexed
+      unique: true, // Enforce uniqueness for non-null firebaseUid values
     },
     avatar: {
       type: String,
@@ -141,7 +143,7 @@ const userSchema = new mongoose.Schema(
 // Index for faster queries
 userSchema.index({ email: 1 });
 userSchema.index({ oauthProvider: 1, oauthId: 1 });
-userSchema.index({ firebaseUid: 1 });
+// firebaseUid index is managed in MongoDB as sparse+unique; no need to redefine here
 
 // Hash password before saving (only for non-OAuth users)
 userSchema.pre("save", async function (next) {
