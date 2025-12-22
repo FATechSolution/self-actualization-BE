@@ -219,31 +219,29 @@ export const QUALITY_VOLUME_SUB_QUESTIONS = [
 
   // 8. Sex
   {
-    mainQuestionText: "I have sufficient money to meet my basic needs without constant stress",
-    // Note: This seems to be a mismatch. The DOCX shows "Sex" but the question is about money.
-    // I'll use the money question for now, but this needs client clarification.
+    mainQuestionText: "My sexual life is healthy and fulfilling",
     qualitySubQuestion: {
-      questionText: "How would you rate the quality/stability of your financial situation?",
+      questionText: "How would you rate the quality of your sexual well-being?",
       ratingOptions: [
-        "1 = Crisis (can't meet basic needs)",
-        "2 = Severe hardship (constant struggle)",
-        "3 = Financial stress (frequent worry)",
-        "4 = Tight but managing (some stress)",
-        "5 = Adequate (needs met with buffer)",
-        "6 = Comfortable (solid foundation)",
-        "7 = Abundant (complete security)"
+        "1 = Severely troubled (major dysfunction/distress)",
+        "2 = Very poor (significant dissatisfaction)",
+        "3 = Poor (frustrating, unfulfilling)",
+        "4 = Fair (acceptable but not satisfying)",
+        "5 = Good (satisfying and healthy)",
+        "6 = Very good (fulfilling and pleasurable)",
+        "7 = Excellent (deeply fulfilling and joyful)"
       ]
     },
     volumeSubQuestion: {
-      questionText: "How much of your basic needs can your income currently cover?",
+      questionText: "How well are your sexual needs being met? (frequency relative to your needs)",
       ratingOptions: [
-        "1 = Less than 30% (crisis level)",
-        "2 = 30-50% (severe shortage)",
-        "3 = 50-70% (significant shortage)",
-        "4 = 70-85% (minor shortage)",
-        "5 = 85-100% (just meeting needs)",
-        "6 = 100-120% (meeting needs + some extra)",
-        "7 = 120%+ (meeting all needs + savings/extras)"
+        "1 = Completely unmet (severe deprivation)",
+        "2 = Mostly unmet (significant gap)",
+        "3 = Often unmet (frequent frustration)",
+        "4 = Sometimes unmet (moderate gap)",
+        "5 = Usually met (occasional gap)",
+        "6 = Well met (rarely wanting)",
+        "7 = Fully met (completely satisfied)"
       ]
     }
   },
