@@ -65,7 +65,7 @@ export const listVideos = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const createVideo = asyncHandler(async (req, res) => {
-  const { title, description, category, videoUrl, thumbnailUrl, durationSeconds, sortOrder } =
+  const { title, description, category, videoUrl, thumbnailUrl, durationSeconds, sortOrder, isActive } =
     req.body;
 
   if (!title || !durationSeconds) {
@@ -115,6 +115,10 @@ export const createVideo = asyncHandler(async (req, res) => {
     }
   }
 
+  const parsedSortOrder = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0;
+  const parsedIsActive =
+    typeof isActive === "string" ? isActive.toLowerCase() !== "false" : isActive ?? true;
+
   const video = await Video.create({
     title: title.trim(),
     description: description ? description.trim() : undefined,
@@ -122,7 +126,8 @@ export const createVideo = asyncHandler(async (req, res) => {
     videoUrl: finalVideoUrl,
     thumbnailUrl: finalThumbnailUrl,
     durationSeconds: Math.round(parsedDuration),
-    sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
+    sortOrder: parsedSortOrder,
+    isActive: parsedIsActive,
     createdByAdmin: req.admin?._id || null,
   });
 
@@ -178,6 +183,7 @@ export const updateVideo = asyncHandler(async (req, res) => {
     thumbnailUrl,
     durationSeconds,
     sortOrder,
+    isActive,
   } = req.body;
 
   const videoFile = req.files?.video?.[0];
@@ -241,6 +247,12 @@ export const updateVideo = asyncHandler(async (req, res) => {
       throw new AppError("sortOrder must be a number", 400);
     }
     updates.sortOrder = parsedSort;
+  }
+
+  if (isActive !== undefined) {
+    const boolVal =
+      typeof isActive === "string" ? isActive.toLowerCase() !== "false" : Boolean(isActive);
+    updates.isActive = boolVal;
   }
 
   if (Object.keys(updates).length === 0) {

@@ -65,7 +65,7 @@ export const listAudios = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const createAudio = asyncHandler(async (req, res) => {
-  const { title, description, category, audioUrl, thumbnailUrl, durationSeconds, sortOrder } =
+  const { title, description, category, audioUrl, thumbnailUrl, durationSeconds, sortOrder, isActive } =
     req.body;
 
   if (!title || !durationSeconds) {
@@ -119,6 +119,10 @@ export const createAudio = asyncHandler(async (req, res) => {
     }
   }
 
+  const parsedSortOrder = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0;
+  const parsedIsActive =
+    typeof isActive === "string" ? isActive.toLowerCase() !== "false" : isActive ?? true;
+
   const audio = await Audio.create({
     title: title.trim(),
     description: description ? description.trim() : undefined,
@@ -126,7 +130,8 @@ export const createAudio = asyncHandler(async (req, res) => {
     audioUrl: finalAudioUrl,
     thumbnailUrl: finalThumbnailUrl,
     durationSeconds: Math.round(parsedDuration),
-    sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
+    sortOrder: parsedSortOrder,
+    isActive: parsedIsActive,
     createdByAdmin: req.admin?._id || null,
   });
 
@@ -182,6 +187,7 @@ export const updateAudio = asyncHandler(async (req, res) => {
     thumbnailUrl,
     durationSeconds,
     sortOrder,
+    isActive,
   } = req.body;
 
   const audioFile = req.files?.audio?.[0];
@@ -245,6 +251,12 @@ export const updateAudio = asyncHandler(async (req, res) => {
       throw new AppError("sortOrder must be a number", 400);
     }
     updates.sortOrder = parsedSort;
+  }
+
+  if (isActive !== undefined) {
+    const boolVal =
+      typeof isActive === "string" ? isActive.toLowerCase() !== "false" : Boolean(isActive);
+    updates.isActive = boolVal;
   }
 
   if (Object.keys(updates).length === 0) {

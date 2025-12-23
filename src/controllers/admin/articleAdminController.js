@@ -66,7 +66,7 @@ export const listArticles = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const createArticle = asyncHandler(async (req, res) => {
-  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder } = req.body;
+  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder, isActive } = req.body;
 
   if (!title || !content || !readTimeMinutes) {
     throw new AppError("Title, content, and readTimeMinutes are required", 400);
@@ -91,13 +91,19 @@ export const createArticle = asyncHandler(async (req, res) => {
     }
   }
 
+  // Parse optional sortOrder and isActive (form-data values come as strings)
+  const parsedSortOrder = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0;
+  const parsedIsActive =
+    typeof isActive === "string" ? isActive.toLowerCase() !== "false" : isActive ?? true;
+
   const article = await Article.create({
     title: title.trim(),
     content: content.trim(),
     category: category ? category.trim() : undefined,
     thumbnailUrl: finalThumbnailUrl,
     readTimeMinutes: Math.round(parsedReadTime),
-    sortOrder: typeof sortOrder === "number" ? sortOrder : 0,
+    sortOrder: parsedSortOrder,
+    isActive: parsedIsActive,
     createdByAdmin: req.admin?._id || null,
   });
 
@@ -145,7 +151,7 @@ export const updateArticle = asyncHandler(async (req, res) => {
   }
 
   const updates = {};
-  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder } =
+  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder, isActive } =
     req.body;
 
   const thumbnailFile = req.files?.thumbnail?.[0];
@@ -195,6 +201,13 @@ export const updateArticle = asyncHandler(async (req, res) => {
       throw new AppError("sortOrder must be a number", 400);
     }
     updates.sortOrder = parsedSort;
+  }
+
+  if (isActive !== undefined) {
+    // Accept boolean or string ("true"/"false")
+    const boolVal =
+      typeof isActive === "string" ? isActive.toLowerCase() !== "false" : Boolean(isActive);
+    updates.isActive = boolVal;
   }
 
   if (Object.keys(updates).length === 0) {
