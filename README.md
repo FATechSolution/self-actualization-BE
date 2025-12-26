@@ -103,6 +103,25 @@ The platform offers 4 subscription tiers with different access levels:
 - `GET /api/auth/me` - Get current user (Protected)
 - `PUT /api/auth/profile` - Update profile (Protected)
 
+### Goals (Level-Based Progress Tracking)
+
+The goal system uses level-based progress tracking (1-7 scale) instead of time-based completion.
+
+- `POST /api/goals` - Create a new goal with current and target levels
+- `GET /api/goals` - List all goals (supports ?status=active or ?status=completed)
+- `GET /api/goals/:id` - Get a specific goal
+- `PATCH /api/goals/:id` - Update goal progress or mark as complete
+- `DELETE /api/goals/:id` - Delete a goal
+- `GET /api/goals/needs/:category` - Get available needs for a category
+
+**Goal Fields:**
+- `currentLevel` (1-7) - User's current satisfaction level
+- `targetLevel` (1-7) - User's target satisfaction level
+- `userNotes` (max 500 chars) - Personal notes about the goal
+- `completedAt` - Auto-set when goal is marked complete
+- `needKey`, `needLabel` - Linked to assessment needs
+- `type` - Category (Survival, Safety, Social, Self, Meta-Needs)
+
 ### Subscriptions
 
 - `POST /api/subscriptions` - Create/record subscription after payment
@@ -123,6 +142,19 @@ npm run dev
 # Production mode
 npm start
 ```
+
+## Database Migration
+
+If you have existing goals in the database, run the migration script to add level-based fields:
+
+```bash
+node Backend/scripts/migrateGoalsToLevelBased.js
+```
+
+This will:
+- Add `currentLevel` (default: 1) and `targetLevel` (default: 7) to existing goals
+- Migrate `description` to `userNotes`
+- Set `completedAt` for already completed goals
 
 ## Deployment
 
