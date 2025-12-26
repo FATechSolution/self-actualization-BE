@@ -72,6 +72,24 @@ npm run dev
 
 The server will run on `http://localhost:5000`
 
+## Subscription Tiers
+
+The platform offers 4 subscription tiers with different access levels:
+
+| Tier | Price | Available Categories | Features |
+|------|-------|---------------------|----------|
+| **Free** | $0 | Survival, Safety | Basic assessment and content access |
+| **Premium** | $19/month | Survival, Safety, Social, Self | Extended assessment and content access |
+| **Gold** | $39/month | All 5 categories (includes Meta-Needs) | Full assessment and content access |
+| **Coach** | $59/month | All 5 categories + Coaching | Full access + personalized coaching features |
+
+**Categories:**
+- **Survival** - Physical needs (sleep, food, exercise, vitality)
+- **Safety** - Security, stability, financial safety
+- **Social** - Relationships, love, belonging
+- **Self** - Confidence, respect, achievement
+- **Meta-Needs** - Purpose, creativity, contribution, self-actualization
+
 ## API Endpoints
 
 ### Authentication
@@ -84,6 +102,13 @@ The server will run on `http://localhost:5000`
 - `POST /api/auth/verify-reset-token` - Verify reset token
 - `GET /api/auth/me` - Get current user (Protected)
 - `PUT /api/auth/profile` - Update profile (Protected)
+
+### Subscriptions
+
+- `POST /api/subscriptions` - Create/record subscription after payment
+- `GET /api/subscriptions/current` - Get current active subscription
+- `GET /api/subscriptions/available-categories` - Get available categories for subscription
+- `PATCH /api/subscriptions/status` - Update subscription payment status
 
 ### Health Check
 

@@ -37,20 +37,10 @@ export const createGoal = asyncHandler(async (req, res) => {
 
   // Validate category against user's subscription
   const user = await User.findById(userId).select("currentSubscriptionType");
-  if (user && user.currentSubscriptionType) {
-    const validation = validateCategoriesForSubscription([type], user.currentSubscriptionType);
-    if (!validation.isValid) {
-      throw new AppError(validation.message, 403);
-    }
-  } else {
-    // Default to Free plan validation
-    const freeCategories = ["Survival", "Safety"];
-    if (!freeCategories.includes(type)) {
-      throw new AppError(
-        `Category "${type}" not available for Free subscription. Available: ${freeCategories.join(", ")}`,
-        403
-      );
-    }
+  const subscriptionType = user?.currentSubscriptionType || "Free";
+  const validation = validateCategoriesForSubscription([type], subscriptionType);
+  if (!validation.isValid) {
+    throw new AppError(validation.message, 403);
   }
 
   // If questionId is provided directly, validate it

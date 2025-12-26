@@ -10,7 +10,7 @@ const subscriptionSchema = new mongoose.Schema(
     },
     subscriptionType: {
       type: String,
-      enum: ["Free", "Premium", "Coach"],
+      enum: ["Free", "Premium", "Gold", "Coach"],
       required: true,
     },
     amount: {

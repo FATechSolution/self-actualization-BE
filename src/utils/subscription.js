@@ -1,27 +1,31 @@
 /**
  * Subscription utility functions and constants
+ * 
+ * Subscription Tiers:
+ * 1. Free ($0) - Survival + Safety
+ * 2. Premium ($19) - Survival + Safety + Social + Self
+ * 3. Gold ($39) - All categories including Meta-Needs
+ * 4. Coach ($59) - All categories + coaching features
  */
 
 // Subscription type to available categories mapping
 export const SUBSCRIPTION_CATEGORIES = {
   Free: ["Survival", "Safety"],
-  Premium: ["Survival", "Safety", "Social", "Self"], // 4 categories (excludes Meta-Needs)
-  Plus: ["Survival", "Safety", "Social", "Self"], // alias for Premium
-  Coach: ["Survival", "Safety", "Social", "Self", "Meta-Needs"], // All 5 categories
-  Pro: ["Survival", "Safety", "Social", "Self", "Meta-Needs"], // alias for Coach
+  Premium: ["Survival", "Safety", "Social", "Self"],
+  Gold: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
+  Coach: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
 };
 
 // Subscription pricing (in USD)
 export const SUBSCRIPTION_PRICING = {
   Free: 0,
   Premium: 19,
-  Plus: 19,
-  Coach: 39,
-  Pro: 39,
+  Gold: 39,
+  Coach: 59,
 };
 
 // Valid subscription types
-export const SUBSCRIPTION_TYPES = ["Free", "Premium", "Plus", "Coach", "Pro"];
+export const SUBSCRIPTION_TYPES = ["Free", "Premium", "Gold", "Coach"];
 
 // Valid categories
 export const VALID_CATEGORIES = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];

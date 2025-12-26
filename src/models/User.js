@@ -98,7 +98,7 @@ const userSchema = new mongoose.Schema(
     // Current subscription info (denormalized for quick access)
     currentSubscriptionType: {
       type: String,
-      enum: ["Free", "Premium", "Plus", "Coach", "Pro"],
+      enum: ["Free", "Premium", "Gold", "Coach"],
       default: "Free",
     },
     coachingOfferEligible: {
