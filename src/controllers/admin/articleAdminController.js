@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Article from "../../models/Article.js";
+import Question from "../../models/Questions.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { AppError } from "../../utils/errorHandler.js";
 import { uploadImageToCloudinary } from "../../utils/cloudinary.js";
@@ -66,15 +67,83 @@ export const listArticles = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const createArticle = asyncHandler(async (req, res) => {
-  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder, isActive } = req.body;
+  const { 
+    title, 
+    content, 
+    category, 
+    thumbnailUrl, 
+    readTimeMinutes, 
+    sortOrder, 
+    isActive,
+    questionId,
+    needKey,
+    needLabel
+  } = req.body;
 
   if (!title || !content || !readTimeMinutes) {
     throw new AppError("Title, content, and readTimeMinutes are required", 400);
   }
 
+  if (!category) {
+    throw new AppError("Category is required", 400);
+  }
+
+  // Validate category
+  const validCategories = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
+  if (!validCategories.includes(category)) {
+    throw new AppError(`Category must be one of: ${validCategories.join(", ")}`, 400);
+  }
+
   const parsedReadTime = Number(readTimeMinutes);
   if (!Number.isFinite(parsedReadTime) || parsedReadTime <= 0) {
     throw new AppError("readTimeMinutes must be a positive number", 400);
+  }
+
+  // Handle question/need linking
+  let finalQuestionId = null;
+  let finalNeedKey = null;
+  let finalNeedLabel = null;
+
+  if (questionId) {
+    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+      throw new AppError("Invalid questionId format", 400);
+    }
+
+    const question = await Question.findOne({
+      _id: questionId,
+      category: category,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (!question) {
+      throw new AppError(
+        `Question with ID "${questionId}" not found in category "${category}" or is inactive`,
+        400
+      );
+    }
+
+    finalQuestionId = question._id;
+    finalNeedKey = question.needKey || needKey || null;
+    finalNeedLabel = question.needLabel || needLabel || null;
+  } else if (needKey) {
+    const question = await Question.findOne({
+      needKey: needKey.trim(),
+      category: category,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (question) {
+      finalQuestionId = question._id;
+      finalNeedKey = question.needKey;
+      finalNeedLabel = question.needLabel || needLabel || null;
+    } else {
+      finalNeedKey = needKey.trim();
+      finalNeedLabel = needLabel ? needLabel.trim() : null;
+    }
   }
 
   const thumbnailFile = req.files?.thumbnail?.[0];
@@ -99,7 +168,10 @@ export const createArticle = asyncHandler(async (req, res) => {
   const article = await Article.create({
     title: title.trim(),
     content: content.trim(),
-    category: category ? category.trim() : undefined,
+    category: category,
+    questionId: finalQuestionId,
+    needKey: finalNeedKey,
+    needLabel: finalNeedLabel,
     thumbnailUrl: finalThumbnailUrl,
     readTimeMinutes: Math.round(parsedReadTime),
     sortOrder: parsedSortOrder,
@@ -151,8 +223,18 @@ export const updateArticle = asyncHandler(async (req, res) => {
   }
 
   const updates = {};
-  const { title, content, category, thumbnailUrl, readTimeMinutes, sortOrder, isActive } =
-    req.body;
+  const { 
+    title, 
+    content, 
+    category, 
+    thumbnailUrl, 
+    readTimeMinutes, 
+    sortOrder, 
+    isActive,
+    questionId,
+    needKey,
+    needLabel
+  } = req.body;
 
   const thumbnailFile = req.files?.thumbnail?.[0];
 
@@ -171,7 +253,61 @@ export const updateArticle = asyncHandler(async (req, res) => {
   }
 
   if (category !== undefined) {
-    updates.category = category ? category.trim() : null;
+    if (category) {
+      const validCategories = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
+      if (!validCategories.includes(category)) {
+        throw new AppError(`Category must be one of: ${validCategories.join(", ")}`, 400);
+      }
+      updates.category = category;
+    } else {
+      throw new AppError("Category cannot be empty", 400);
+    }
+  }
+
+  // Handle question/need updates
+  if (questionId !== undefined) {
+    if (questionId === null || questionId === "") {
+      updates.questionId = null;
+      updates.needKey = null;
+      updates.needLabel = null;
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(questionId)) {
+        throw new AppError("Invalid questionId format", 400);
+      }
+
+      const articleCategory = updates.category || (await Article.findById(id).select("category")).category;
+
+      const question = await Question.findOne({
+        _id: questionId,
+        category: articleCategory,
+        section: 1,
+        sectionType: "regular",
+        isActive: true,
+      }).lean();
+
+      if (!question) {
+        throw new AppError(
+          `Question with ID "${questionId}" not found in category "${articleCategory}" or is inactive`,
+          400
+        );
+      }
+
+      updates.questionId = question._id;
+      updates.needKey = question.needKey || needKey || null;
+      updates.needLabel = question.needLabel || needLabel || null;
+    }
+  } else if (needKey !== undefined) {
+    if (needKey === null || needKey === "") {
+      updates.needKey = null;
+      updates.needLabel = null;
+    } else {
+      updates.needKey = needKey.trim();
+      if (needLabel !== undefined) {
+        updates.needLabel = needLabel ? needLabel.trim() : null;
+      }
+    }
+  } else if (needLabel !== undefined) {
+    updates.needLabel = needLabel ? needLabel.trim() : null;
   }
 
   // Thumbnail update: file or direct URL

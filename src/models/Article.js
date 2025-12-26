@@ -18,13 +18,37 @@ const articleSchema = new mongoose.Schema(
       trim: true,
     },
     /**
-     * Optional high-level category or topic for grouping in the app
+     * Category based on Maslow's Hierarchy of Needs
+     * Links content to specific need categories for better organization
      */
     category: {
       type: String,
-      trim: true,
-      maxlength: [80, "Category must be less than or equal to 80 characters"],
+      enum: ["Survival", "Safety", "Social", "Self", "Meta-Needs"],
+      required: true,
+    },
+    /**
+     * Optional reference to a specific question/need from assessment
+     * Allows linking content to specific needs (e.g., "sleep", "exercise")
+     */
+    questionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Question",
       default: null,
+    },
+    /**
+     * Optional need metadata for quick reference (denormalized from Question)
+     */
+    needKey: {
+      type: String,
+      trim: true,
+      default: null,
+      // e.g., "sleep", "exercise", "social_connection"
+    },
+    needLabel: {
+      type: String,
+      trim: true,
+      default: null,
+      // e.g., "Sleep", "Exercise", "Social Connection"
     },
     /**
      * Thumbnail / cover image for the article card

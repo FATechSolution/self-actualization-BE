@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Audio from "../../models/Audio.js";
+import Question from "../../models/Questions.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import { AppError } from "../../utils/errorHandler.js";
 import { uploadImageToCloudinary, uploadMediaToCloudinary } from "../../utils/cloudinary.js";
@@ -65,16 +66,86 @@ export const listAudios = asyncHandler(async (req, res) => {
  * @access  Private (Admin)
  */
 export const createAudio = asyncHandler(async (req, res) => {
-  const { title, description, category, audioUrl, thumbnailUrl, durationSeconds, sortOrder, isActive } =
-    req.body;
+  const { 
+    title, 
+    description, 
+    category, 
+    audioUrl, 
+    thumbnailUrl, 
+    durationSeconds, 
+    sortOrder, 
+    isActive,
+    questionId,
+    needKey,
+    needLabel
+  } = req.body;
 
   if (!title || !durationSeconds) {
     throw new AppError("Title and durationSeconds are required", 400);
   }
 
+  if (!category) {
+    throw new AppError("Category is required", 400);
+  }
+
+  // Validate category
+  const validCategories = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
+  if (!validCategories.includes(category)) {
+    throw new AppError(`Category must be one of: ${validCategories.join(", ")}`, 400);
+  }
+
   const parsedDuration = Number(durationSeconds);
   if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
     throw new AppError("durationSeconds must be a positive number", 400);
+  }
+
+  // Handle question/need linking
+  let finalQuestionId = null;
+  let finalNeedKey = null;
+  let finalNeedLabel = null;
+
+  if (questionId) {
+    if (!mongoose.Types.ObjectId.isValid(questionId)) {
+      throw new AppError("Invalid questionId format", 400);
+    }
+
+    const question = await Question.findOne({
+      _id: questionId,
+      category: category,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (!question) {
+      throw new AppError(
+        `Question with ID "${questionId}" not found in category "${category}" or is inactive`,
+        400
+      );
+    }
+
+    finalQuestionId = question._id;
+    finalNeedKey = question.needKey || needKey || null;
+    finalNeedLabel = question.needLabel || needLabel || null;
+  } else if (needKey) {
+    // If needKey provided without questionId, look up the question
+    const question = await Question.findOne({
+      needKey: needKey.trim(),
+      category: category,
+      section: 1,
+      sectionType: "regular",
+      isActive: true,
+    }).lean();
+
+    if (question) {
+      finalQuestionId = question._id;
+      finalNeedKey = question.needKey;
+      finalNeedLabel = question.needLabel || needLabel || null;
+    } else {
+      // Allow needKey without question (for custom needs)
+      finalNeedKey = needKey.trim();
+      finalNeedLabel = needLabel ? needLabel.trim() : null;
+    }
   }
 
   // Files from multer (see adminAudioRoutes):
@@ -126,7 +197,10 @@ export const createAudio = asyncHandler(async (req, res) => {
   const audio = await Audio.create({
     title: title.trim(),
     description: description ? description.trim() : undefined,
-    category: category ? category.trim() : undefined,
+    category: category,
+    questionId: finalQuestionId,
+    needKey: finalNeedKey,
+    needLabel: finalNeedLabel,
     audioUrl: finalAudioUrl,
     thumbnailUrl: finalThumbnailUrl,
     durationSeconds: Math.round(parsedDuration),
@@ -188,6 +262,9 @@ export const updateAudio = asyncHandler(async (req, res) => {
     durationSeconds,
     sortOrder,
     isActive,
+    questionId,
+    needKey,
+    needLabel,
   } = req.body;
 
   const audioFile = req.files?.audio?.[0];
@@ -205,7 +282,62 @@ export const updateAudio = asyncHandler(async (req, res) => {
   }
 
   if (category !== undefined) {
-    updates.category = category ? category.trim() : null;
+    if (category) {
+      const validCategories = ["Survival", "Safety", "Social", "Self", "Meta-Needs"];
+      if (!validCategories.includes(category)) {
+        throw new AppError(`Category must be one of: ${validCategories.join(", ")}`, 400);
+      }
+      updates.category = category;
+    } else {
+      throw new AppError("Category cannot be empty", 400);
+    }
+  }
+
+  // Handle question/need updates
+  if (questionId !== undefined) {
+    if (questionId === null || questionId === "") {
+      // Clear question/need fields
+      updates.questionId = null;
+      updates.needKey = null;
+      updates.needLabel = null;
+    } else {
+      if (!mongoose.Types.ObjectId.isValid(questionId)) {
+        throw new AppError("Invalid questionId format", 400);
+      }
+
+      const audioCategory = updates.category || (await Audio.findById(id).select("category")).category;
+
+      const question = await Question.findOne({
+        _id: questionId,
+        category: audioCategory,
+        section: 1,
+        sectionType: "regular",
+        isActive: true,
+      }).lean();
+
+      if (!question) {
+        throw new AppError(
+          `Question with ID "${questionId}" not found in category "${audioCategory}" or is inactive`,
+          400
+        );
+      }
+
+      updates.questionId = question._id;
+      updates.needKey = question.needKey || needKey || null;
+      updates.needLabel = question.needLabel || needLabel || null;
+    }
+  } else if (needKey !== undefined) {
+    if (needKey === null || needKey === "") {
+      updates.needKey = null;
+      updates.needLabel = null;
+    } else {
+      updates.needKey = needKey.trim();
+      if (needLabel !== undefined) {
+        updates.needLabel = needLabel ? needLabel.trim() : null;
+      }
+    }
+  } else if (needLabel !== undefined) {
+    updates.needLabel = needLabel ? needLabel.trim() : null;
   }
 
   // Audio can be updated via new file or direct URL
