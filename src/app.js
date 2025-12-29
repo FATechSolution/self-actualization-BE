@@ -119,6 +119,7 @@ app.get("/", (req, res) => {
       goals: {
         create: "POST /api/goals",
         list: "GET /api/goals",
+        needsByCategory: "GET /api/goals/needs/:category",
         retrieve: "GET /api/goals/:id",
         update: "PATCH /api/goals/:id",
         delete: "DELETE /api/goals/:id",
