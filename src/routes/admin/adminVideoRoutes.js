@@ -20,9 +20,6 @@ const upload = multer({
   },
 });
 
-// All video management routes require admin authentication
-router.use(authenticateAdmin);
-
 // Expect multipart/form-data with optional files:
 // - video: video file to upload to Cloudinary (videoUrl will be derived)
 // - thumbnail: image file for thumbnail (thumbnailUrl will be derived)
@@ -30,6 +27,14 @@ const videoAndThumbnailUpload = upload.fields([
   { name: "video", maxCount: 1 },
   { name: "thumbnail", maxCount: 1 },
 ]);
+
+// Skip auth for OPTIONS preflight requests
+router.options("*", (req, res) => {
+  res.sendStatus(200);
+});
+
+// All video management routes require admin authentication (except OPTIONS)
+router.use(authenticateAdmin);
 
 router
   .route("/")
