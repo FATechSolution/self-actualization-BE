@@ -20,12 +20,7 @@ const upload = multer({
   },
 });
 
-// Skip auth for OPTIONS preflight requests
-router.options("*", (req, res) => {
-  res.sendStatus(200);
-});
-
-// All video management routes require admin authentication (except OPTIONS)
+// All video management routes require admin authentication
 router.use(authenticateAdmin);
 
 // Expect multipart/form-data with optional files:
