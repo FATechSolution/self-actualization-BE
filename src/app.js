@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB, ensureConnection } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -32,45 +31,33 @@ connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
 
-// CORS configuration
-const corsOptions = {
-  origin: (origin, callback) => {
-    try {
-      // Always include these origins
-      const defaultOrigins = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:5173",
-        "https://self-admin-pannel.vercel.app",
-        "https://self-actualization-app.vercel.app",
-      ];
-      
-      // Add any additional origins from environment variable
-      const envOrigins = process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(",").map(o => o.trim())
-        : [];
-      
-      const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])];
+// CORS middleware - simpler implementation without external dependency
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "https://self-admin-pannel.vercel.app",
+    "https://self-actualization-app.vercel.app",
+  ];
 
-      // Allow requests with no origin (Postman, curl, etc.) and from allowed origins
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(null, false);
-      }
-    } catch (error) {
-      console.error("CORS Error:", error);
-      callback(error);
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  maxAge: 86400, // 24 hours
-};
+  const origin = req.headers.origin;
 
-// Apply CORS middleware globally
-app.use(cors(corsOptions));
+  // Always allow these origins or requests without origin header
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+  }
+
+  // Handle preflight OPTIONS requests
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  next();
+});
 
 // Middleware
 app.use(express.json());
