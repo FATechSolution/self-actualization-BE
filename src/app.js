@@ -31,23 +31,20 @@ connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
 
-// CORS middleware - Simple and robust
+// CORS middleware - Always set headers for admin panel
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:5173",
-    "https://self-admin-pannel.vercel.app"
-  ];
+  // Always allow your admin panel
+  res.setHeader("Access-Control-Allow-Origin", "https://self-admin-pannel.vercel.app");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Max-Age", "3600");
 
+  // Also allow localhost for development
   const origin = req.headers.origin;
-
-  // Set CORS headers if origin is allowed
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+  const devOrigins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"];
+  if (devOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
   // Handle preflight OPTIONS
