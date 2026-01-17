@@ -8,15 +8,14 @@ import {
   getNeedsByCategory,
 } from "../controllers/goalController.js";
 import { authenticate } from "../middlewares/auth.js";
-import { authenticateAdmin } from "../middlewares/admin/adminAuth.js";
 
 const router = express.Router();
 
-// Admin route - needs can be accessed by admins for content management
-router.get("/needs/:category", authenticateAdmin, getNeedsByCategory);
-
-// User-only routes
+// User-only routes (needs endpoint should be accessible to authenticated users)
 router.use(authenticate);
+
+// Get needs by category - accessible to authenticated users for goal creation
+router.get("/needs/:category", getNeedsByCategory);
 
 router.post("/", createGoal);
 router.get("/", getGoals);

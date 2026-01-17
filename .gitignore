@@ -59,3 +59,11 @@ Thumbs.db
 tmp/
 temp/
 
+# Test and temporary scripts
+test-*.js
+get-token.js
+*_TESTING*.md
+*_FIX*.md
+*_CHECKLIST*.md
+TROUBLESHOOTING*.md
+HOW_TO_*.md
