@@ -12,22 +12,16 @@ import { authenticateAdmin } from "../../middlewares/admin/adminAuth.js";
 const router = express.Router();
 
 // Use memory storage for Vercel serverless compatibility
-// Files are stored in memory and uploaded directly to Cloudinary
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 500 * 1024 * 1024, // 500MB limit for videos
+    fileSize: 500 * 1024 * 1024, // 500MB limit
   },
 });
 
-// Handle preflight OPTIONS requests BEFORE authentication
-router.options("*", (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(200);
-});
+// Handle preflight requests before authentication
+router.options("/", (req, res) => res.sendStatus(200));
+router.options("/:id", (req, res) => res.sendStatus(200));
 
 // All video management routes require admin authentication
 router.use(authenticateAdmin);
