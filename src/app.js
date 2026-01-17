@@ -31,30 +31,33 @@ connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
 
-// CORS middleware
+// CORS middleware - Set headers FIRST before any other processing
 app.use((req, res, next) => {
-  const allowedOrigins = process.env.ALLOWED_ORIGINS
-    ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
-    : [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "http://localhost:5173",
-      "https://self-admin-pannel.vercel.app"
-    ];
+  // Define allowed origins
+  const allowedOrigins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "https://self-admin-pannel.vercel.app",
+    "https://self-actualization-app.vercel.app"
+  ];
 
   const origin = req.headers.origin;
 
-  // Always set CORS headers for allowed origins or requests without origin
-  if (allowedOrigins.includes(origin) || !origin) {
+  // ALWAYS set CORS headers if origin is allowed or no origin header
+  if (!origin || allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
     res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Max-Age", "86400");
   }
 
+  // Handle preflight OPTIONS requests immediately
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
+
   next();
 });
 
