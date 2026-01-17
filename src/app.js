@@ -31,34 +31,31 @@ connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
 
-// CORS middleware - Ensure headers are always set
+// ============================================================
+// CORS Middleware - MUST be first middleware
+// ============================================================
 app.use((req, res, next) => {
-  const originalSend = res.send;
+  const origin = req.headers.origin || "";
   
-  // Override send to ensure CORS headers are always present
-  res.send = function(data) {
-    res.setHeader("Access-Control-Allow-Origin", "https://self-admin-pannel.vercel.app");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    return originalSend.call(this, data);
-  };
+  // Allowed origins
+  const allowedOrigins = [
+    "https://self-admin-pannel.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+  ];
 
-  // Also handle dev origins
-  const origin = req.headers.origin;
-  const devOrigins = ["http://localhost:3000", "http://localhost:3001", "http://localhost:5173"];
-  if (devOrigins.includes(origin)) {
+  if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    // Always set for admin panel
-    res.setHeader("Access-Control-Allow-Origin", "https://self-admin-pannel.vercel.app");
   }
-  
+
+  // Always set these headers for allowed origins
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-
-  // Handle preflight OPTIONS
+  
+  // Handle preflight OPTIONS requests
   if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
+    return res.status(200).end();
   }
 
   next();
