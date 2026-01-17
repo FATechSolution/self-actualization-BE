@@ -31,31 +31,31 @@ connectDB().catch((err) => {
   console.error("Database connection error:", err);
 });
 
-// CORS middleware - simpler implementation without external dependency
+// CORS middleware
 app.use((req, res, next) => {
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:5173",
-    "https://self-admin-pannel.vercel.app",
-    "https://self-actualization-app.vercel.app",
-  ];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",").map(origin => origin.trim())
+    : [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:5173",
+      "https://self-admin-pannel.vercel.app"
+    ];
 
   const origin = req.headers.origin;
 
-  // Always allow these origins or requests without origin header
-  if (!origin || allowedOrigins.includes(origin)) {
+  // Allow requests from allowed origins or if no origin (like Postman)
+  if (allowedOrigins.includes(origin) || !origin) {
     res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
   }
 
-  // Handle preflight OPTIONS requests
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
-
   next();
 });
 
