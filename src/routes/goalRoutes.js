@@ -11,11 +11,11 @@ import { authenticate } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// User-only routes (needs endpoint should be accessible to authenticated users)
-router.use(authenticate);
-
-// Get needs by category - accessible to authenticated users for goal creation
+// Public routes (no authentication required)
 router.get("/needs/:category", getNeedsByCategory);
+
+// User-only routes (authentication required)
+router.use(authenticate);
 
 router.post("/", createGoal);
 router.get("/", getGoals);
