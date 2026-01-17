@@ -44,15 +44,20 @@ app.use((req, res, next) => {
 
   const origin = req.headers.origin;
 
-  // Allow requests from allowed origins or if no origin (like Postman)
-  if (allowedOrigins.includes(origin) || !origin) {
-    res.setHeader("Access-Control-Allow-Origin", origin || "*");
+  // Always set CORS headers for allowed origins or if no origin (like Postman/curl)
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else if (!origin) {
+    // For requests without origin header (Postman, curl, etc.)
+    res.setHeader("Access-Control-Allow-Origin", "*");
   }
 
+  // Always set these headers
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
   res.setHeader("Access-Control-Allow-Credentials", "true");
 
+  // Handle preflight OPTIONS requests
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
