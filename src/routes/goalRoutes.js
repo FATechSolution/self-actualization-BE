@@ -7,16 +7,24 @@ import {
   deleteGoal,
   getNeedsByCategory,
 } from "../controllers/goalController.js";
-import { authenticate } from "../middlewares/auth.js";
+import { authenticate, optionalAuthenticate } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-// Public routes (no authentication required)
-router.get("/needs/:category", getNeedsByCategory);
+// ============================================================
+// PUBLIC ROUTES (No Authentication Required)
+// ============================================================
+// Get needs list by category - Public endpoint for dropdown selection
+// Uses optional auth to support both authenticated and unauthenticated requests
+router.get("/needs/:category", optionalAuthenticate, getNeedsByCategory);
 
-// User-only routes (authentication required)
+// ============================================================
+// PROTECTED ROUTES (Authentication Required)
+// ============================================================
+// All routes below this line require user authentication
 router.use(authenticate);
 
+// Goal CRUD operations
 router.post("/", createGoal);
 router.get("/", getGoals);
 router.get("/:id", getGoalById);
